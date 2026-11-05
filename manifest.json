@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.xenophon81.veazy",
+  "name": "Veazy",
+  "version": "0.1.0",
+  "author": "Peter van den Heuvel",
+  "license": "AGPL-3.0-only",
+  "description": "Native Veazy controls for the Omarchy bar, with an isolated BlueZ backend and an offline demonstration mode.",
+  "kinds": ["bar-widget", "service"],
+  "entryPoints": {
+    "barWidget": "Panel.qml",
+    "service": "Service.qml"
+  },
+  "barWidget": {
+    "displayName": "Veazy",
+    "category": "Devices",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}

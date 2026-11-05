@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-only
+"""Observe an already connected Veazy through BlueZ; send no GATT operations."""
+
+import argparse
+import asyncio
+from collections import Counter
+import json
+from pathlib import Path
+import sys
+
+
+async def observe(seconds):
+    from dbus_fast import BusType, Message, MessageType
+    from dbus_fast.aio import MessageBus
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
+    from omarchy_veazy.protocol import CONTROL_UUID, SERVICE_UUID, decode
+    from omarchy_veazy.transport import is_veazy_name
+
+    bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
+    try:
+        reply = await bus.call(Message(destination="org.bluez", path="/",
+            interface="org.freedesktop.DBus.ObjectManager", member="GetManagedObjects"))
+        if reply.message_type == MessageType.ERROR:
+            raise RuntimeError(reply.error_name)
+        objects = reply.body[0]
+        devices = [path for path, interfaces in objects.items()
+            if "org.bluez.Device1" in interfaces
+            and "Name" in interfaces["org.bluez.Device1"]
+            and interfaces["org.bluez.Device1"].get("Connected")
+            and interfaces["org.bluez.Device1"]["Connected"].value
+            and is_veazy_name(interfaces["org.bluez.Device1"].get("Name").value)]
+        if len(devices) != 1:
+            raise RuntimeError("Connect exactly one Veazy in the native panel before running this check")
+        device_path = devices[0]
+        services = [path for path, interfaces in objects.items()
+            if path.startswith(device_path + "/") and "org.bluez.GattService1" in interfaces
+            and interfaces["org.bluez.GattService1"]["UUID"].value.lower() == SERVICE_UUID]
+        characteristics = [(path, interfaces["org.bluez.GattCharacteristic1"])
+            for path, interfaces in objects.items() if path.startswith(device_path + "/")
+            and "org.bluez.GattCharacteristic1" in interfaces
+            and interfaces["org.bluez.GattCharacteristic1"]["UUID"].value.lower() == CONTROL_UUID]
+        if not services or len(characteristics) != 1:
+            raise RuntimeError("Expected Veazy service/control characteristic is missing")
+        path, properties = characteristics[0]
+        counts = Counter()
+        latest = {}
+
+        def record(raw, source):
+            parsed = decode(bytes(raw))
+            if parsed is None:
+                return
+            command, data = parsed
+            counts[f"{source}:0x{command:02x}"] += 1
+            # Never print device addresses, serial numbers or advertising names.
+            latest.update({key: value for key, value in data.items()
+                if key not in ("serial_number", "color_index")})
+
+        if "Value" in properties:
+            record(properties["Value"].value, "cached")
+
+        def handler(message):
+            if (message.message_type == MessageType.SIGNAL and message.path == path
+                    and message.interface == "org.freedesktop.DBus.Properties"
+                    and message.member == "PropertiesChanged"):
+                interface, changed, _ = message.body
+                if interface == "org.bluez.GattCharacteristic1" and "Value" in changed:
+                    record(changed["Value"].value, "notification")
+
+        bus.add_message_handler(handler)
+        rule = ("type='signal',sender='org.bluez',interface='org.freedesktop.DBus.Properties',"
+                f"member='PropertiesChanged',path='{path}'")
+        reply = await bus.call(Message(destination="org.freedesktop.DBus", path="/org/freedesktop/DBus",
+            interface="org.freedesktop.DBus", member="AddMatch", signature="s", body=[rule]))
+        if reply.message_type == MessageType.ERROR:
+            raise RuntimeError(reply.error_name)
+        await asyncio.sleep(seconds)
+        bus.remove_message_handler(handler)
+        print(json.dumps({"seconds": seconds, "flags": properties["Flags"].value,
+            "notifying": properties.get("Notifying").value if "Notifying" in properties else None,
+            "frames": dict(counts), "decoded": latest, "gatt_operations_sent": 0}, indent=2, sort_keys=True))
+        if not any(key.startswith("notification:") for key in counts):
+            raise RuntimeError("No live notifications observed; check the connection in the native panel")
+    finally:
+        bus.disconnect()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--seconds", type=int, default=8, choices=range(1, 31), metavar="1..30")
+    args = parser.parse_args()
+    try:
+        asyncio.run(observe(args.seconds))
+    except (RuntimeError, ImportError) as error:
+        print(f"check-device-readonly: {error}", file=sys.stderr)
+        sys.exit(1)

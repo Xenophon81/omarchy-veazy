@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-only
+set -euo pipefail
+if [[ ${1:-} == --help ]]; then
+  echo "Usage: bash scripts/setup-backend"
+  echo "Creates a user virtual environment outside the plugin and installs requirements."
+  exit 0
+fi
+[[ $# == 0 ]] || { echo "Unexpected arguments" >&2; exit 1; }
+veazy_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+veazy_data="${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-veazy"
+mkdir -p -- "$veazy_data"
+python3 -m venv "$veazy_data/venv"
+"$veazy_data/venv/bin/python" -m pip --disable-pip-version-check install -r "$veazy_root/requirements.txt"
+"$veazy_data/venv/bin/python" -c 'from bleak import BleakClient, BleakScanner; print("Veazy backend dependencies ready; no Bluetooth action performed.")'

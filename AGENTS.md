@@ -8,12 +8,14 @@
 - Lees eerst [docs/PROJECT.md](docs/PROJECT.md) voor onderzoeksbronnen, besluiten, fasering, open vragen en acceptatiecriteria.
 - Communiceer en documenteer standaard in het Nederlands; gebruik Engelse code-identifiers en technische logs.
 
-## Grenzen van de huidige opdracht
+## Grenzen en voortgang
 
-- De eerste opdracht omvat analyse en uitsluitend `AGENTS.md` en `docs/PROJECT.md`.
-- Implementeer pas daarna de mock-plugin, vervolgens de Bluetooth-service en ten slotte hun integratie, volgens de afgesproken fasering.
-- Wijzig momenteel geen systeemconfiguratie, installeer geen dependencies en activeer geen plugin of service.
-- Latere implementatie in de repository is geen toestemming om bestanden onder `~/.config/` te wijzigen, de shell te herstarten of de plugin te installeren. Baseer installatiebevoegdheid op de dan geldende gebruikersopdracht.
+- De eerste documentatiefase is afgerond en gecommit. De vervolgvraag vraagt om een native interface met de relevante upstreamfuncties; implementatie in de repository is nu aan de orde.
+- Bouw eerst de mock-plugin, vervolgens de Bluetooth-service en ten slotte hun integratie, volgens de afgesproken fasering.
+- De gebruiker heeft op 2026-11-05 expliciet ingestemd met het icoon rechts activeren en Bluetooth-dependencies in de gebruikersmap installeren. Dit is uitgevoerd; vraag voor deze reeds geautoriseerde handelingen niet opnieuw toestemming.
+- De plugin is als lokale kopie geïnstalleerd onder `~/.config/omarchy/plugins/io.github.xenophon81.veazy/`; de venv staat onder `~/.local/share/omarchy-veazy/venv`. Runtimecode en repository waren bij oplevering identiek. Houd latere wijzigingen/installatiekopieën bewust bij; iedere wijziging onder de geïnstalleerde plugin kan hot reload en disconnect veroorzaken.
+- De gebruiker heeft daarna expliciet een uitleestest van de verbonden Veazy toegestaan en om publicatie van de eerste versie gevraagd. Passieve BlueZ-telemetrie is gevalideerd; zie `docs/HARDWARE_TESTS.md`. Dit is geen toestemming om zelf instellingen of verwarming te wijzigen.
+- Accustatus wordt ook in de balk en prominent bovenaan het paneel getoond. Onbekende/verouderde/verbroken data mag geen oud percentage laten zien. De eerste publieke preview is versie `0.1.0`.
 
 ## Omarchy-contract
 
@@ -33,6 +35,7 @@
 - Python met Bleak/BlueZ is de voorkeursbackend; geen Web Bluetooth-runtime.
 - Het protocoldeel blijft zuivere Python zonder Bleak-, QML- of procesafhankelijkheden.
 - Beoogde IPC: een door de QML-service beheerd `Quickshell.Io.Process` met versiegebonden JSON Lines over stdin/stdout. Logs gaan naar stderr.
+- Ieder workerbericht draagt een lokale processessie; negeer oude sessies en serialiseer stoppen/starten bij moduswissels. Dit is IPC-metadata, geen BLE-transaction-id.
 - Valideer typen, commando's, berichtlengtes en waardebereiken aan beide IPC-zijden. Gebruik argumentlijsten voor processen; interpoleer geen apparaatdata in shellcommando's.
 - Houd dependencies/venvs buiten de geïnstalleerde pluginmap: Omarchy-validatie weigert symlinks binnen een plugin. Geen automatisch downloaden/installeren bij shellstart.
 - Dagelijkse bediening werkt als gewone gebruiker via de bestaande BlueZ D-Bus-policy. Voeg geen roothelper of brede rechtenaanpassing toe.
@@ -56,6 +59,7 @@
 - Verwarming aan/uit, een doeltemperatuur toepassen en boost/superboost activeren komen uitsluitend uit een bewuste bediening door de gebruiker.
 - Gebruik afzonderlijke, expliciete opdrachten zoals `set_heater(true/false)` in plaats van een toggle die na timeout kan omkeren.
 - Herhaal of bewaar geen verwarmingsopdrachten automatisch bij fouten, procesherstart of reconnect. Gooi oude sessieopdrachten weg; lees eerst opnieuw de status.
+- Een read/write-timeout, ambigue GATT-fout of onbevestigde mutatie maakt de sessie blijvend onzeker tot expliciete reconnect. Late responses/polls mogen dat niet herstellen. Blokkeer mutaties, behalve één expliciet heater-uit-verzoek met zichtbaar onbevestigde uitkomst.
 - Een verbroken verbinding betekent dat de heaterstatus onbekend is, niet dat de verwarming uitstaat. Maak pending, bevestigd, verouderd en onbekend zichtbaar.
 - Mockmodus blijft herkenbaar en strikt gescheiden van echte BLE-writes.
 

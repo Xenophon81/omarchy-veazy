@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-only
+set -euo pipefail
+veazy_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+veazy_data="${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-veazy"
+veazy_python="${veazy_data}/venv/bin/python"
+if [[ ! -x "$veazy_python" ]]; then
+  veazy_python="$(command -v python3)"
+fi
+cd -- "$veazy_root/backend"
+exec "$veazy_python" -u -m omarchy_veazy

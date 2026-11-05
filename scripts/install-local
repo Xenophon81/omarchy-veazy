@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-only
+set -euo pipefail
+if [[ ${1:-} == --help ]]; then
+  echo "Usage: bash scripts/install-local"
+  echo "Copies this checkout into the user plugin directory and enables its right-hand bar widget."
+  echo "Refuses to overwrite an existing installation; does not install Python dependencies."
+  exit 0
+fi
+[[ $# == 0 ]] || { echo "Unexpected arguments" >&2; exit 1; }
+veazy_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+veazy_id="io.github.xenophon81.veazy"
+veazy_plugins="$HOME/.config/omarchy/plugins"
+veazy_target="$veazy_plugins/$veazy_id"
+[[ ! -e "$veazy_target" && ! -L "$veazy_target" ]] || {
+  echo "Already installed: $veazy_target. Use Omarchy's plugin management to remove or update it." >&2
+  exit 1
+}
+omarchy plugin validate "$veazy_root"
+veazy_stage="$(mktemp -d -t omarchy-veazy-install.XXXXXXXX)"
+trap 'rm -rf -- "$veazy_stage"' EXIT
+mkdir -- "$veazy_stage/plugin"
+for veazy_file in manifest.json Panel.qml Service.qml LICENSE NOTICE README.md requirements.txt AGENTS.md; do
+  cp -- "$veazy_root/$veazy_file" "$veazy_stage/plugin/"
+done
+for veazy_dir in components i18n backend scripts docs; do
+  cp -R -- "$veazy_root/$veazy_dir" "$veazy_stage/plugin/"
+done
+find "$veazy_stage/plugin" -type d -name __pycache__ -prune -exec rm -rf -- {} +
+omarchy plugin validate "$veazy_stage/plugin"
+# Back up configuration before enabling through the official shell interface.
+if [[ -f "$HOME/.config/omarchy/shell.json" ]]; then
+  cp -p -- "$HOME/.config/omarchy/shell.json" "$HOME/.config/omarchy/shell.json.veazy-$(date +%Y%m%d-%H%M%S).bak"
+fi
+mkdir -p -- "$veazy_plugins"
+mv -- "$veazy_stage/plugin" "$veazy_target"
+omarchy-shell shell rescanPlugins
+omarchy plugin enable "$veazy_id" --section right
+echo "Veazy is enabled in demonstration mode. Open its icon; select Bluetooth mode only when ready to discover your device."

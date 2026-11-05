@@ -1,0 +1,163 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-only
+"""Check QML without installing a plugin, opening UI, or starting Bluetooth."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import signal
+import subprocess
+import sys
+import tempfile
+
+
+REPO = Path(__file__).resolve().parent.parent
+QML_ERRORS = re.compile(r"(?:ReferenceError|TypeError|SyntaxError|Binding loop detected|Cannot assign|Unable to assign)")
+
+
+def executable(name: str, fallback: str | None = None) -> str:
+    found = shutil.which(name)
+    if found:
+        return found
+    if fallback and Path(fallback).is_file():
+        return fallback
+    raise RuntimeError(f"Required executable is missing: {name}")
+
+
+def display_socket() -> Path | None:
+    display = os.environ.get("WAYLAND_DISPLAY", "")
+    if not display:
+        return None
+    path = Path(display)
+    if not path.is_absolute():
+        path = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")) / path
+    return path if path.is_socket() else None
+
+
+def run_fixture(
+    quickshell: str,
+    directory: Path,
+    fixture: str,
+    marker: str,
+    *,
+    source_url: str,
+    files: list[Path] | None = None,
+    instantiate: bool = False,
+    wayland: Path | None = None,
+    verbose: bool = False,
+) -> int:
+    directory.mkdir()
+    runtime = directory / "runtime"
+    runtime.mkdir(mode=0o700)
+    shutil.copyfile(REPO / "tests" / "qml" / fixture, directory / "shell.qml")
+    # Quickshell maps qs.* to its config root. Link read-only installed modules
+    # into the disposable harness, never into the plugin or user config.
+    shell = Path(os.environ.get("OMARCHY_PATH", "/usr/share/omarchy")) / "shell"
+    for module in ("Commons", "Ui"):
+        (directory / module).symlink_to(shell / module, target_is_directory=True)
+    guard = directory / "no-hardware"
+    guard.mkdir()
+    (guard / "bleak.py").write_text('raise RuntimeError("BLE imports are forbidden in the idle IPC fixture")\n')
+    env = dict(os.environ)
+    for name in ("QT_QPA_PLATFORMTHEME", "QT_IM_MODULE", "HYPRLAND_INSTANCE_SIGNATURE", "DISPLAY", "WAYLAND_DISPLAY"):
+        env.pop(name, None)
+    env.update(
+        QT_QPA_PLATFORM="wayland" if wayland else "offscreen",
+        QT_QUICK_BACKEND="software",
+        QS_NO_RELOAD_POPUP="1",
+        QS_DISABLE_FILE_WATCHER="1",
+        XDG_RUNTIME_DIR=str(runtime),
+        QML_DISK_CACHE_PATH=str(directory / "qml-cache"),
+        VEAZY_SOURCE_URL=source_url,
+        VEAZY_QML_FILES=json.dumps([path.as_uri() for path in (files or [])]),
+        VEAZY_INSTANTIATE_HELPERS="1" if instantiate else "0",
+        PYTHONPATH=str(guard) + os.pathsep + env.get("PYTHONPATH", ""),
+    )
+    if wayland:
+        # Retain access to the existing display while keeping harness IPC/logs
+        # in its temporary runtime directory. No UI object is instantiated.
+        env["WAYLAND_DISPLAY"] = str(wayland)
+    process = subprocess.Popen(
+        [quickshell, "--no-color", "-p", str(directory)],
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        start_new_session=True,
+    )
+    terminated = False
+    try:
+        try:
+            output, _ = process.communicate(timeout=3)
+        except subprocess.TimeoutExpired:
+            terminated = True
+            os.killpg(process.pid, signal.SIGTERM)
+            output, _ = process.communicate(timeout=3)
+    finally:
+        # The private process group also contains a possible idle worker.
+        # Clean it up even when Quickshell itself has already exited/crashed.
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        if process.poll() is None:
+            process.wait(timeout=3)
+    exited_cleanly = process.returncode == 0 or (terminated and process.returncode == -signal.SIGTERM)
+    good = exited_cleanly and re.search(re.escape(marker) + r" 0\b", output) is not None
+    failed = not good or "VEAZY_TEST FAIL" in output or "VEAZY_COMPONENT FAIL" in output or QML_ERRORS.search(output)
+    if verbose or failed:
+        print(output, end="")
+    if failed:
+        raise RuntimeError(f"QML fixture failed: {fixture}")
+    return len(re.findall(r"VEAZY_(?:TEST|COMPONENT(?:_CREATE)?) PASS", output))
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--require-wayland", action="store_true", help="Fail instead of skipping native component compilation without a Wayland display")
+    parser.add_argument("--verbose", action="store_true", help="Print every fixture assertion and runtime log")
+    args = parser.parse_args()
+    quickshell = executable("quickshell")
+    qmllint = executable("qmllint", "/usr/lib/qt6/bin/qmllint")
+    shell = Path(os.environ.get("OMARCHY_PATH", "/usr/share/omarchy")) / "shell"
+    if not (shell / "Ui" / "qmldir").is_file():
+        raise RuntimeError(f"Installed Omarchy shell modules are missing: {shell}")
+    wayland = display_socket()
+    if args.require_wayland and not wayland:
+        raise RuntimeError("A running Wayland display is required for the native component compile check")
+    helpers = sorted((REPO / "components").glob("*.qml"))
+    files = [REPO / "Panel.qml", REPO / "Service.qml", *helpers]
+    with tempfile.TemporaryDirectory(prefix="veazy-qml-check-") as name:
+        temporary = Path(name)
+        (temporary / "qs").symlink_to(shell, target_is_directory=True)
+        subprocess.run([
+            qmllint, "--ignore-settings", "--only-explicit-categories",
+            "--import", "warning", "--syntax", "error", "--max-warnings", "0",
+            "-I", str(temporary), *map(str, files),
+        ], check=True)
+        print("QML imports and syntax: PASS")
+        count = run_fixture(quickshell, temporary / "mock", "service-mock.qml", "VEAZY_TESTS_FINISHED", source_url=REPO.as_uri(), verbose=args.verbose)
+        print(f"Mock service: PASS ({count} assertions; no BLE worker)")
+        count = run_fixture(quickshell, temporary / "idle", "service-idle.qml", "VEAZY_IDLE_FINISHED", source_url=REPO.as_uri(), verbose=args.verbose)
+        print(f"Idle JSONL worker: PASS ({count} assertions; BLE imports blocked)")
+        count = run_fixture(quickshell, temporary / "helpers", "components.qml", "VEAZY_COMPONENTS_FINISHED", source_url=REPO.as_uri(), files=helpers, instantiate=True, verbose=args.verbose)
+        print(f"Offscreen helpers: PASS ({count} compile/create checks)")
+        if wayland:
+            count = run_fixture(quickshell, temporary / "compile", "components.qml", "VEAZY_COMPONENTS_FINISHED", source_url=REPO.as_uri(), files=files, wayland=wayland, verbose=args.verbose)
+            print(f"Native components: PASS ({count} compile checks; no UI created)")
+        else:
+            print("Native components: SKIP (no Wayland display; use --require-wayland to require this check)")
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except (RuntimeError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
+        print(f"check-qml: {error}", file=sys.stderr)
+        sys.exit(1)
