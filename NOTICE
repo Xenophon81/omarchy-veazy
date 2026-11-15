@@ -26,3 +26,10 @@ Protocol source: firsttris/reactive-volcano-app at
 9d773eff709d721e0e79b403ac2258ba5a851d6c.
 The native UI, transport, IPC, and controller contain project-specific changes.
 This project distributes its code under AGPL-3.0-only.
+
+Veazy GNOME / Omarchy preview 0.2.0
+The original GNOME Shell interface and vector icon are project additions (2026).
+Its Zinc/ember visual direction is inspired by Reactive Volcano App by Tristan
+Teufel; no upstream web artwork, fonts, or web runtime are bundled.
+storz-rs by flakesonnix, commit 07bf74be90b705eb3d2caa783542976b16c0f78a,
+was consulted as a protocol reference; no Rust source code was copied.

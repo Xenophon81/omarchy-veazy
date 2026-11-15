@@ -20,10 +20,10 @@ omarchy plugin validate "$veazy_root"
 veazy_stage="$(mktemp -d -t omarchy-veazy-install.XXXXXXXX)"
 trap 'rm -rf -- "$veazy_stage"' EXIT
 mkdir -- "$veazy_stage/plugin"
-for veazy_file in manifest.json Panel.qml Service.qml LICENSE NOTICE README.md requirements.txt AGENTS.md; do
+for veazy_file in manifest.json LICENSE NOTICE README.md requirements.txt AGENTS.md; do
   cp -- "$veazy_root/$veazy_file" "$veazy_stage/plugin/"
 done
-for veazy_dir in components i18n backend scripts docs; do
+for veazy_dir in platforms backend scripts docs; do
   cp -R -- "$veazy_root/$veazy_dir" "$veazy_stage/plugin/"
 done
 find "$veazy_stage/plugin" -type d -name __pycache__ -prune -exec rm -rf -- {} +

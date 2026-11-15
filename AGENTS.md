@@ -1,8 +1,10 @@
-# Projectinstructies voor omarchy-veazy
+# Projectinstructies voor Veazy — GNOME en Omarchy
 
 ## Doel en scope
 
-- Bouw een native plugin voor de Omarchy Quickshell-interface om een Storz & Bickel Veazy via Bluetooth LE te bedienen.
+- Onderhoud twee native interfaces voor dezelfde Storz & Bickel Veazy-backend: Omarchy Quickshell en GNOME Shell 46 op Ubuntu 24.04 LTS (X11 en Wayland).
+- GNOME-bronnen staan in `platforms/gnome/`; Omarchy-bronnen in `platforms/omarchy/`. Het officiële Omarchy-manifest blijft aan de root; `backend/omarchy_veazy/` is gedeeld.
+- Lees ook [docs/GNOME.md](docs/GNOME.md) voor GNOME-installatie en native tests. Verhoog de ondersteunde GNOME-majeurversie niet zonder runtimevalidatie.
 - Het icoon hoort standaard rechts in de bestaande balk; bediening opent een native shell-paneel.
 - Gebruik geen aparte desktopapp, browser, PWA, Electron of Chromium. Vervang ook niet de volledige Omarchy-balk.
 - Lees eerst [docs/PROJECT.md](docs/PROJECT.md) voor onderzoeksbronnen, besluiten, fasering, open vragen en acceptatiecriteria.
@@ -15,7 +17,9 @@
 - De gebruiker heeft op 2026-11-05 expliciet ingestemd met het icoon rechts activeren en Bluetooth-dependencies in de gebruikersmap installeren. Dit is uitgevoerd; vraag voor deze reeds geautoriseerde handelingen niet opnieuw toestemming.
 - De plugin is als lokale kopie geïnstalleerd onder `~/.config/omarchy/plugins/io.github.xenophon81.veazy/`; de venv staat onder `~/.local/share/omarchy-veazy/venv`. Runtimecode en repository waren bij oplevering identiek. Houd latere wijzigingen/installatiekopieën bewust bij; iedere wijziging onder de geïnstalleerde plugin kan hot reload en disconnect veroorzaken.
 - De gebruiker heeft daarna expliciet een uitleestest van de verbonden Veazy toegestaan en om publicatie van de eerste versie gevraagd. Passieve BlueZ-telemetrie is gevalideerd; zie `docs/HARDWARE_TESTS.md`. Dit is geen toestemming om zelf instellingen of verwarming te wijzigen.
-- Accustatus wordt ook in de balk en prominent bovenaan het paneel getoond. Onbekende/verouderde/verbroken data mag geen oud percentage laten zien. De eerste publieke preview is versie `0.1.0`.
+- Accustatus wordt ook in de balk en prominent bovenaan het paneel getoond. Onbekende/verouderde/verbroken data mag geen oud percentage laten zien. De eerste Omarchy-preview was `0.1.0`; de gezamenlijke GNOME/Omarchy-preview is `0.2.0`.
+- De gebruiker heeft op 2026-11-15 de platformuitbreiding en het pushen van code, release notes en projectbeschrijving naar GitHub gevraagd.
+- De eerdere geïnstalleerde Omarchy-kopie is niet automatisch bijgewerkt door de GNOME-uitbreiding. Op de Ubuntu-ontwikkelmachine ontbreken Omarchy en Quickshell; native Omarchy-regressietests moeten op de Omarchy-host herhaald worden.
 
 ## Omarchy-contract
 
@@ -32,7 +36,8 @@
 ## Architectuur
 
 - Houd QML-presentatie, IPC, verbindingsbeheer en protocolcodering gescheiden.
-- Python met Bleak/BlueZ is de voorkeursbackend; geen Web Bluetooth-runtime.
+- Python met Bleak/BlueZ blijft de gedeelde backend; geen Web Bluetooth-runtime of tweede Rust-backend. GNOME beheert één `Gio.Subprocess` met hetzelfde JSONL-contract.
+- Start ook onder GNOME standaard in mockmodus. De native UI gebruikt GJS/St/Clutter/Cairo en geen aparte vensters. Scope CSS tot de extensie, verwijder timers en beëindig/reap de worker bij uitschakelen.
 - Het protocoldeel blijft zuivere Python zonder Bleak-, QML- of procesafhankelijkheden.
 - Beoogde IPC: een door de QML-service beheerd `Quickshell.Io.Process` met versiegebonden JSON Lines over stdin/stdout. Logs gaan naar stderr.
 - Ieder workerbericht draagt een lokale processessie; negeer oude sessies en serialiseer stoppen/starten bij moduswissels. Dit is IPC-metadata, geen BLE-transaction-id.

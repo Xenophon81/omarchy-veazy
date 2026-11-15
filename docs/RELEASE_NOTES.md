@@ -1,3 +1,51 @@
+# v0.2.0 — Native GNOME en Omarchy
+
+Preview · 15 november 2026
+
+Veazy heeft nu een native **GNOME Shell 46-extensie voor Ubuntu 24.04 LTS**, geschikt voor **X11 en Wayland**, naast de bestaande Omarchy Quickshell-plugin. Beide interfaces gebruiken één gedeelde Python/Bleak-codebase. Deze preview bevat een direct installeerbare GNOME-extension-zip.
+
+## Nieuw
+
+- Rechts in de bestaande GNOME-balk: Veazy-icoon en batterijpercentage; native paneel met doeltemperatuurboog, donkere kaarten en oranje accenten geïnspireerd op Reactive Volcano App.
+- Basisdoel bewerken en apart toepassen; afzonderlijke knoppen voor verwarmen, stoppen, boost en superboost. Gemeten temperatuur blijft afzonderlijk en kan onbekend zijn.
+- Apparaatinstellingen, offsets, firmware-/runtimegegevens, ruwe diagnostiek en zichtbare upstreamcredits. Nederlands en Engels volgen de desktoptaal.
+- Herkenbare offline demo, expliciete apparaatkeuze en verbinding, pending/onbekende/verouderde status, geen automatische opdrachten of reconnect.
+- GJS-procesbeheer met begrensde JSONL-pipes, worker-sessies, veilige moduswissels en opruimen bij uitschakelen. Geen browser, webserver of apart appvenster.
+- Reproduceerbaar installatiepakket en lokale installer met backup; dependencies alleen via expliciete setup buiten de extensiemap.
+- Project opgesplitst in `platforms/gnome`, `platforms/omarchy` en gedeelde `backend`. De Omarchy-plugin-id, rootmanifest, repository-URL en venv-locatie blijven behouden.
+
+## Gecontroleerd
+
+- Ubuntu 24.04.5 LTS, GNOME Shell 46.0 / Mutter 46.2, GJS 1.80.2, Python 3.12.3.
+- **19 native UI-controles op zowel X11 als Wayland** in geïsoleerde GNOME-testsessies, inclusief laden, bediening in demo, concept/toepassen, onbekende temperatuur, verouderde batterij, Escape en disable/enable. Vier Wayland-screenshots zijn visueel gecontroleerd. X11-opnamen via de geneste Xephyr-screenshot-API zijn overgeslagen omdat die API niet terugkeerde.
+- **40 Python-tests**, **6 JavaScript-validatietests** en **25 GJS-clientcontroles**, zonder fysieke BLE-opdrachten. Installer-/updatetests bevestigen pakketinhoud, backup en werkende workerpaden.
+- Officiële Omarchy-validator uit `quattro`, commit `197f5ede68d044ad15ad6ccef4b6a2ab0fca92a1`, accepteert het rootmanifest en de verplaatste bestanden. Omarchy/Quickshell zijn niet geïnstalleerd op de Ubuntu-host; QML-runtimechecks moeten daar opnieuw worden uitgevoerd.
+
+## Grenzen van deze preview
+
+**Er zijn geen nieuwe hardwaretests uitgevoerd. Verwarming, doeltemperatuur-, boost- en instellingenwrites zijn nog niet op een fysieke Veazy bevestigd.** De eerdere 0.1.0-waarnemingen betreffen passieve telemetrie; zie [HARDWARE_TESTS.md](HARDWARE_TESTS.md).
+
+Effectieve doelen boven 210 °C blijven geblokkeerd. Een ontbrekende meting wordt niet door een doel of schatting vervangen. Timeouts/ambigue resultaten blokkeren mutaties tot een expliciete reconnect; één bewuste heater-uit-opdracht blijft zichtbaar onbevestigd. Disconnect betekent heater onbekend.
+
+Andere GNOME-versies, meerdere monitoren, fractionele schaling, schermlezers en fysieke BLE-werking op Ubuntu vragen verdere validatie. Firmware-updates, factory reset en andere apparaatmodellen vallen buiten scope. De geïnstalleerde Omarchy-kopie is niet automatisch vervangen.
+
+## Ubuntu installeren
+
+```bash
+gnome-extensions install veazy@xenophon81.github.io.shell-extension.zip
+bash ~/.local/share/gnome-shell/extensions/veazy@xenophon81.github.io/scripts/setup-backend
+# Meld af en opnieuw aan, dan:
+gnome-extensions enable veazy@xenophon81.github.io
+```
+
+Indien nodig eerst `sudo apt install python3-venv bluez`. Na installatie en updates is een nieuwe aanmeldsessie de gemeenschappelijke route voor X11 en Wayland. Er is geen automatische shellherstart. Zie [GNOME.md](GNOME.md) en [README](../README.md) voor broninstallatie, updates en gebruik.
+
+## Bronnen
+
+**[Reactive Volcano App by Tristan Teufel](https://github.com/firsttris/reactive-volcano-app)** blijft de bron van de protocolport en de visuele inspiratie. Onderzocht op `9d773eff709d721e0e79b403ac2258ba5a851d6c`. [storz-rs](https://github.com/flakesonnix/storz-rs), commit `07bf74be90b705eb3d2caa783542976b16c0f78a`, is als aanvullende referentie gelezen; geen Rust-code overgenomen. Licentie blijft [AGPL-3.0-only](../LICENSE), met [NOTICE](../NOTICE) en native credits.
+
+---
+
 # v0.1.0 — First native preview
 
 Initial release · 5 November 2026

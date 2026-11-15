@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-only
+"""Build/install the native GNOME extension without Bluetooth or session actions."""
+from __future__ import annotations
+import argparse
+import json
+import os
+from pathlib import Path, PurePosixPath
+import shutil
+import stat
+import tempfile
+import time
+import zipfile
+
+ROOT = Path(__file__).resolve().parents[1]
+UUID = 'veazy@xenophon81.github.io'
+DEFAULT_ZIP = ROOT / 'dist' / f'{UUID}.shell-extension.zip'
+
+
+def sources():
+    source = ROOT / 'platforms' / 'gnome'
+    metadata = json.loads((source / 'metadata.json').read_text())
+    if metadata.get('uuid') != UUID or metadata.get('shell-version') != ['46']:
+        raise ValueError('Unexpected GNOME extension metadata')
+    result = {}
+    for folder, prefix in [(source, Path()), (ROOT / 'backend', Path('backend'))]:
+        for path in sorted(folder.rglob('*')):
+            if path.is_symlink():
+                raise ValueError(f'Symbolic links are not packaged: {path}')
+            relative = path.relative_to(folder)
+            if not path.is_file() or '__pycache__' in relative.parts or path.suffix in {'.pyc', '.pyo'}:
+                continue
+            result[(prefix / relative).as_posix()] = path
+    for name in ['scripts/run-backend', 'scripts/setup-backend', 'requirements.txt', 'LICENSE', 'NOTICE']:
+        path = ROOT / name
+        if not path.is_file() or path.is_symlink():
+            raise ValueError(f'Required package file missing: {name}')
+        result[name] = path
+    return result
+
+
+def build(output):
+    files = sources()
+    output = output.resolve()
+    output.parent.mkdir(parents=True, exist_ok=True)
+    handle, temporary = tempfile.mkstemp(prefix=f'.{output.name}.', dir=output.parent)
+    os.close(handle)
+    try:
+        with zipfile.ZipFile(temporary, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+            for name, source in sorted(files.items()):
+                info = zipfile.ZipInfo(name, (2026, 11, 15, 0, 0, 0))
+                info.compress_type = zipfile.ZIP_DEFLATED
+                mode = 0o755 if name.startswith('scripts/') else 0o644
+                info.external_attr = (stat.S_IFREG | mode) << 16
+                archive.writestr(info, source.read_bytes())
+        os.replace(temporary, output)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+    print(output)
+
+
+def install(archive_path):
+    data = Path(os.environ.get('XDG_DATA_HOME', Path.home() / '.local/share'))
+    extensions = data / 'gnome-shell' / 'extensions'
+    extensions.mkdir(parents=True, exist_ok=True)
+    destination = extensions / UUID
+    if destination.is_symlink():
+        raise ValueError('The extension destination is a symbolic link')
+    stage = Path(tempfile.mkdtemp(prefix=f'.{UUID}.install-', dir=extensions))
+    backup = None
+    try:
+        with zipfile.ZipFile(archive_path) as archive:
+            names = set()
+            total_size = 0
+            for member in archive.infolist():
+                name = member.filename
+                if (not name or name.startswith('/') or '\\' in name or '..' in PurePosixPath(name).parts
+                        or name in names or stat.S_ISLNK(member.external_attr >> 16)):
+                    raise ValueError(f'Unsafe archive entry: {name}')
+                names.add(name)
+                total_size += member.file_size
+                if total_size > 10 * 1024 * 1024:
+                    raise ValueError('Extension archive is unexpectedly large')
+            metadata = json.loads(archive.read('metadata.json'))
+            if metadata.get('uuid') != UUID or metadata.get('shell-version') != ['46']:
+                raise ValueError('Unexpected GNOME extension metadata')
+            for required in ['extension.js', 'backend.js', 'model.js', 'stylesheet.css', 'scripts/run-backend', 'backend/omarchy_veazy/__main__.py', 'LICENSE', 'NOTICE']:
+                if required not in names:
+                    raise ValueError(f'Incomplete extension archive: {required}')
+            archive.extractall(stage)
+        for script in (stage / 'scripts').iterdir():
+            script.chmod(0o755)
+        if destination.exists():
+            backup_root = extensions.parent / 'veazy-extension-backups'
+            backup_root.mkdir(parents=True, exist_ok=True)
+            backup = backup_root / f'{UUID}-{time.time_ns()}'
+            os.replace(destination, backup)
+        try:
+            os.replace(stage, destination)
+        except BaseException:
+            if backup is not None:
+                os.replace(backup, destination)
+            raise
+    finally:
+        if stage.exists():
+            shutil.rmtree(stage)
+    print(f'Installed: {destination}')
+    if backup is not None:
+        print(f'Previous installation: {backup}')
+    print('Log out and back in, then run:')
+    print(f'gnome-extensions enable {UUID}')
+    print('Bluetooth dependencies (explicit setup only):')
+    print(f'bash {destination}/scripts/setup-backend')
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest='action', required=True)
+    build_parser = sub.add_parser('build')
+    build_parser.add_argument('--output', type=Path, default=DEFAULT_ZIP)
+    install_parser = sub.add_parser('install')
+    install_parser.add_argument('archive', type=Path, nargs='?', default=DEFAULT_ZIP)
+    args = parser.parse_args()
+    try:
+        build(args.output) if args.action == 'build' else install(args.archive)
+    except (OSError, ValueError, KeyError, zipfile.BadZipFile) as error:
+        parser.exit(1, f'Error: {error}\n')
+
+
+if __name__ == '__main__':
+    main()

@@ -350,7 +350,7 @@ Item {
 
   Process {
     id: worker
-    command: ["bash", root.localPath(Qt.resolvedUrl("scripts/run-backend"))]
+    command: ["bash", root.localPath(Qt.resolvedUrl("../../scripts/run-backend"))]
     environment: ({OMARCHY_VEAZY_WORKER_SESSION: String(root._generation)})
     stdinEnabled: true
     running: root._workerWanted

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1400" height="470" viewBox="0 0 1400 470" role="img" aria-labelledby="title description">
-  <title id="title">omarchy-veazy</title>
-  <desc id="description">Your Veazy. In your shell. A native Quickshell plugin for Omarchy, connected through Bluetooth LE.</desc>
+  <title id="title">Veazy — GNOME en Omarchy</title>
+  <desc id="description">Your Veazy. In your shell. Native GNOME and Quickshell controls, connected through Bluetooth LE.</desc>
   <defs>
     <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#111628"/>
@@ -23,18 +23,18 @@
   <path d="M283 286H311V303H283ZM311 291H315V298H311" fill="none" stroke="#b7d9b3" stroke-width="2"/>
   <rect x="287" y="290" width="17" height="9" rx="1" fill="#b7d9b3"/>
   <g font-family="ui-monospace, SFMono-Regular, Consolas, monospace">
-    <text x="425" y="114" fill="#a69cf4" font-size="17" letter-spacing="4">NATIVE OMARCHY PLUGIN</text>
+    <text x="425" y="114" fill="#a69cf4" font-size="17" letter-spacing="4">GNOME + OMARCHY</text>
     <text x="420" y="205" fill="#ffd1ae" font-size="76" font-weight="700" letter-spacing="-3">omarchy-veazy</text>
     <text x="425" y="260" fill="#f0e8e1" font-size="31">Your Veazy. In your shell.</text>
     <g font-size="16" fill="#c9c4d8">
       <rect x="425" y="300" width="204" height="37" rx="9" fill="#a69cf4" fill-opacity=".11"/>
-      <text x="445" y="324">Native Quickshell</text>
+      <text x="445" y="324">Ubuntu + Omarchy</text>
       <rect x="643" y="300" width="173" height="37" rx="9" fill="#a69cf4" fill-opacity=".11"/>
       <text x="663" y="324">Bluetooth LE</text>
       <rect x="830" y="300" width="113" height="37" rx="9" fill="#a69cf4" fill-opacity=".11"/>
       <text x="850" y="324">AGPLv3</text>
     </g>
-    <text x="62" y="433" fill="#8d91a8" font-size="16">Omarchy 4.5 · Linux / BlueZ · Python + QML</text>
-    <text x="1197" y="433" fill="#a69cf4" font-size="16">v0.1.0</text>
+    <text x="62" y="433" fill="#8d91a8" font-size="16">Ubuntu 24.04 · Omarchy 4.5 · Linux / BlueZ</text>
+    <text x="1197" y="433" fill="#a69cf4" font-size="16">v0.2.0</text>
   </g>
 </svg>

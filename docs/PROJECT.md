@@ -1,6 +1,31 @@
-# omarchy-veazy
+# Veazy — GNOME en Omarchy
 
-## Status en opdracht
+## Huidige platformuitbreiding — 15 november 2026
+
+**Preview 0.2.0** voegt op verzoek van de gebruiker native GNOME-bediening voor Ubuntu 24.04 LTS toe, naast Omarchy. De gebruiker werkt op X11; Wayland gebruikt dezelfde native interface. De bestaande Python/Bleak-controller blijft gedeeld. Geen Rust-backend, browserruntime, aparte desktopapp of vervangende balk.
+
+| Onderdeel | Nieuwe indeling / bewijs |
+| --- | --- |
+| GNOME | `platforms/gnome/`: ESM-extensie, St/Clutter, Cairo-temperatuurboog, eigen scope voor CSS en Nederlandse/Engelse teksten |
+| Omarchy | `platforms/omarchy/`: bestaande QML-interface, componenten en vertalingen; rootmanifest verwijst naar verplaatste entrypoints |
+| Gedeeld | `backend/omarchy_veazy/`, protocol/controller/BlueZ/JSONL ongewijzigd; pakketnaam en venv-pad blijven voor compatibiliteit behouden |
+| GNOME-IPC | Eén `Gio.Subprocess` per extensie, argv-array, begrensde asynchrone pipes, worker-sessies, stop/start-serialisatie, geen herhaling van opdrachten |
+| Installatie | Reproduceerbare `.shell-extension.zip`, installatie per gebruiker met backup van vorige versie, expliciete dependencysetup buiten extensiemap |
+| Vormgeving | Zinc/ember-palet en doeltemperatuurboog geïnspireerd op Reactive Volcano App; oorspronkelijke vectoricoon en native widgets, geen gekopieerde webassets/fonts |
+
+**Gecontroleerde Ubuntu-host:** Ubuntu 24.04.5 LTS, GNOME Shell 46.0, Mutter 46.2, GJS 1.80.2, Python 3.12.3; actieve sessie X11. Omarchy/Quickshell zijn op deze host niet geïnstalleerd. Er is geen bestaande Omarchy-runtimekopie bijgewerkt.
+
+**Nieuwe controles:** 40 Python-tests (38 bestaande backendtests plus twee package/installertests), zes pure JavaScript-validatietests, 25 GJS-clientcontroles. Geïsoleerde GNOME Shell 46-tests slagen met 19 native UI-controles op zowel Wayland (headless) als X11 (Xephyr): laden, geen automatische verbinding/writes, concept/toepassen, expliciete mockbediening, batterijveroudering, Escape, uitschakelen en opnieuw inschakelen. Vier Wayland-screenshots zijn visueel bekeken; de geneste X11-screenshot-API blijft hangen en wordt in die harness overgeslagen. De UI-harness blokkeert Bleak-imports. Dit zijn geen hardwaretests. Er zijn geen nieuwe scans, verbindingen of apparaatwrites op de fysieke Veazy uitgevoerd.
+
+**Omarchy-contract opnieuw gecontroleerd:** `omarchy version`/native QML-tests zijn op Ubuntu niet beschikbaar. Officiële `quattro`-bron opnieuw gelezen op commit `197f5ede68d044ad15ad6ccef4b6a2ab0fca92a1`; pluginhandleiding, validator en eigen servicefacade blijven leidend. `bash /tmp/veazy-reference-omarchy/bin/omarchy-plugin-validate .` slaagt met de verplaatste entrypoints. Dit is de officiële manifest-/bestandscheck, geen nieuwe QML-runtimevalidatie. De QML-bronnen zijn op het relatieve workerpad na ongewijzigd; `scripts/check-qml` verwijst naar de nieuwe paden. Native Omarchy-regressie moet op de Omarchy-host herhaald worden vóór een claim over nieuw runtimegedrag.
+
+**Referenties opnieuw gelezen:** Reactive Volcano App op dezelfde vastgezette commit `9d773eff709d721e0e79b403ac2258ba5a851d6c`, inclusief `src/css/main.css`, `TemperatureGauge.tsx` en Veazy/Venty-screenshots. `storz-rs` op commit `07bf74be90b705eb3d2caa783542976b16c0f78a`, metadata MIT, is onderzocht als aanvullende referentie. De README noemt Veazy niet hardwaregetest. Er is geen Rust-code overgenomen; de al geteste pure protocolport en veiligheidssemantiek blijven behouden, onder AGPL-3.0-only. De aanvullende attributie blijft in NOTICE en beide native informatiepagina's staan.
+
+Nog te controleren: fysieke BLE-bediening op deze Ubuntu-host, alle heater-/instellingswrites, overige firmware, meerdere monitoren, fractionele schaling en schermlezers. Doelen boven 210 °C blijven conservatief geblokkeerd. Er is geen automatisch verbinden of herstellen van instellingen. Een onzekere sessie blijft onzeker tot reconnect; disconnect betekent heater onbekend.
+
+Zie [GNOME-installatie en verificatie](GNOME.md), [release notes](RELEASE_NOTES.md) en [README](../README.md). Het onderstaande onderzoek beschrijft de eerdere Omarchy-fase en haar historische hardwarebewijs.
+
+## Historisch onderzoek: Omarchy-preview 0.1.0
 
 **Preview 0.1.0:** accupercentage en laadstatus zijn op echte Veazy-telemetrie bevestigd. Het percentage verschijnt naast het balkicoon en in een prominente accukaart bovenaan het paneel. Zie [hardwarewaarnemingen](HARDWARE_TESTS.md) en [release notes](RELEASE_NOTES.md). Verwarmings-/instellingswrites blijven buiten de door ons uitgevoerde hardwaretests.
 
@@ -38,7 +63,7 @@ De geïnstalleerde bron is gelezen en vergeleken met de officiële [shellreferen
 | Distributie | Git-repository met `manifest.json` aan de root |
 | Manifest | `schemaVersion: 1`; `id`, `name`, `version`, `kinds`, `entryPoints` verplicht |
 | Plugin-id | Voorgesteld: `io.github.xenophon81.veazy`; `omarchy.*` is gereserveerd |
-| Onderdelen | `kinds: ["bar-widget", "service"]`; `entryPoints.barWidget: "Panel.qml"`, `entryPoints.service: "Service.qml"` |
+| Onderdelen | `kinds: ["bar-widget", "service"]`; `entryPoints.barWidget: "platforms/omarchy/Panel.qml"`, `entryPoints.service: "platforms/omarchy/Service.qml"` |
 | Plaatsing | `barWidget.defaultSection: "right"`, `allowMultiple: false` |
 | Native bediening | `qs.Ui.Panel`, `BarIconButton`, verankerde `KeyboardPanel` |
 | Eigen gedeelde service | Binnen de widget via `bar.shell.serviceFor(moduleName)`; facade is beperkt tot de eigen plugin |
@@ -154,10 +179,11 @@ Geïmplementeerde hoofdindeling:
 
 ```text
 manifest.json                officiële pluginroot
-Panel.qml                    icoon, paneel en UI-bediening
-Service.qml                  één model en één beheerd Python-proces
-components/                  kleine native UI-componenten
-i18n/{en,nl}.json            eigen vertalingen
+platforms/omarchy/Panel.qml  icoon, paneel en UI-bediening
+platforms/omarchy/Service.qml één model en één beheerd Python-proces
+platforms/omarchy/components/ kleine native UI-componenten
+platforms/omarchy/i18n/       eigen vertalingen
+platforms/gnome/             GNOME Shell-extensie met dezelfde backend
 backend/omarchy_veazy/
   protocol.py                UUIDs, encoders, decoders, capabilitydefinities
   transport.py               Bleak discovery, GATT, notifications

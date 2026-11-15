@@ -1,112 +1,124 @@
-<p align="center">
-  <img src="assets/github-banner.svg" alt="Omarchy Veazy — native controls, right in your bar" width="100%">
-</p>
+<p align="center"><img src="assets/github-banner.svg" alt="Veazy — native bediening voor GNOME en Omarchy" width="100%"></p>
 
-<p align="center">
-  <a href="docs/RELEASE_NOTES.md"><img src="https://img.shields.io/badge/version-0.1.0_preview-9fbc91" alt="Version 0.1.0 preview"></a>
-  <a href="https://github.com/omacom/omarchy"><img src="https://img.shields.io/badge/Omarchy-4.5-c0a36e" alt="Omarchy 4.5"></a>
-  <a href="#how-it-works"><img src="https://img.shields.io/badge/UI-native_Quickshell-8ba4b0" alt="Native Quickshell UI"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0--only-a7a7a7" alt="AGPL-3.0-only license"></a>
-</p>
+# Veazy voor Ubuntu en Omarchy
 
-# Your Veazy, in the Omarchy bar
+Bedien je Storz & Bickel **Veazy** vanuit de bestaande bovenbalk. Een native paneel toont temperatuurinstellingen, verwarmingsmodi, batterij en apparaatinstellingen. Er draait geen browser of aparte desktopapp.
 
-Control your Storz & Bickel **Veazy** directly from the native Omarchy shell. A small icon on the right opens temperature controls, battery status and device settings in a panel that follows your desktop theme.
+**Preview 0.2.0** voegt een GNOME Shell-extensie voor **Ubuntu 24.04 LTS / GNOME 46** toe, geschikt voor **X11 en Wayland**. De bestaande Omarchy-plugin blijft beschikbaar. Beide gebruiken dezelfde Python/Bleak-backend en dezelfde protocolbeveiligingen. De GNOME-interface volgt de donkere vormgeving en oranje temperatuurboog van [Reactive Volcano App](https://github.com/firsttris/reactive-volcano-app).
 
-**v0.1.0 is an early preview.** The native panel and live Bluetooth telemetry have been checked on a real Veazy. Heating, boost and settings writes are implemented and tested with a simulated transport; their hardware behavior still needs validation. See the [release notes](docs/RELEASE_NOTES.md) for the exact scope.
+> Verwarming, temperatuur-, boost- en instellingenwrites zijn met een gesimuleerd transport getest. Hun werking op een fysieke Veazy is nog niet bevestigd. Eerdere hardwarewaarnemingen betreffen passieve telemetrie; zie [hardwaretests](docs/HARDWARE_TESTS.md).
 
-<p align="center">
-  <img src="docs/images/panel.png" alt="The native Veazy panel in Omarchy with temperature controls and battery status" width="760">
-  <br>
-  <sub>Native panel on Omarchy.</sub>
-</p>
+<p align="center"><img src="docs/images/gnome-control.png" alt="De native GNOME-extensie op Ubuntu met een offline demo-Veazy" width="800"><br><sub>GNOME Shell 46 op Ubuntu · offline demo, geen hardwaremeting.</sub></p>
 
-## What you get
+## Ubuntu 24.04 LTS installeren
 
-<p align="center">
-  <img src="docs/images/bar.png" alt="Veazy battery percentage beside its icon in the Omarchy bar" width="180">
-  <br>
-  <sub>Battery percentage stays visible in the bar.</sub>
-</p>
+Download `veazy@xenophon81.github.io.shell-extension.zip` bij de [nieuwste release](https://github.com/Xenophon81/omarchy-veazy/releases). Installeer het pakket:
 
-- **Native shell controls** — a bar icon and themed Quickshell panel, with English and Dutch text.
-- **Temperature and heating** — base target, effective target, explicit heater controls, boost and superboost.
-- **Battery at a glance** — a battery gauge, percentage and charging status from device telemetry.
-- **Device details** — supported vibration, brightness and charging options, diagnostics, connection state and clear errors. An offline demo lets you explore the panel first.
+```bash
+gnome-extensions install veazy@xenophon81.github.io.shell-extension.zip
+```
 
-## Install
+Installeer daarna expliciet de Bluetooth-dependencies:
 
-You need **Omarchy 4.5 with its official Quickshell plugin API**, Python and a working BlueZ Bluetooth LE adapter. The tested system uses Python 3.14 and BlueZ 5.87 on an Intel MacBook Pro.
+```bash
+# Alleen nodig als Python-venv of BlueZ ontbreekt:
+sudo apt install python3-venv bluez
+
+bash ~/.local/share/gnome-shell/extensions/veazy@xenophon81.github.io/scripts/setup-backend
+```
+
+**Meld je af en opnieuw aan**, op zowel X11 als Wayland. Activeer vervolgens:
+
+```bash
+gnome-extensions enable veazy@xenophon81.github.io
+```
+
+Het Veazy-icoon verschijnt rechts in de bestaande GNOME-balk. De extensie begint in **Demo**; openen of aanmelden start geen Bluetooth-scan of verbinding. Je kunt de vormgeving en bediening eerst offline bekijken via **Demo → Ontdek de demo → Verbind** (Engelstalige desktop: **Explore the demo → Connect**).
+
+Voor installeren vanuit deze repository:
+
+```bash
+python3 scripts/gnome-extension build
+python3 scripts/gnome-extension install
+bash scripts/setup-backend
+```
+
+De lokale installer bewaart een bestaande extensieversie buiten de extensiemap. Hij wijzigt geen andere extensies of shellinstellingen. [Uitgebreide Ubuntu-instructies](docs/GNOME.md) beschrijven updates, uitschakelen en probleemoplossing.
+
+## Omarchy installeren
+
+Voor Omarchy 4.5 met de officiële Quickshell-plugin-API:
 
 ```bash
 omarchy plugin add https://github.com/Xenophon81/omarchy-veazy.git --enable
 bash ~/.config/omarchy/plugins/io.github.xenophon81.veazy/scripts/setup-backend
 ```
 
-The first command installs the plugin and adds its icon to the right of the bar. The second installs the pinned Bluetooth dependencies into a user virtual environment under `~/.local/share/omarchy-veazy/venv` (or `$XDG_DATA_HOME/omarchy-veazy/venv`). Daily use runs as your normal user.
+De widget staat standaard rechts en opent een native Quickshell-paneel. Voor een lokale checkout: `bash scripts/install-local`. Die installer weigert een bestaande installatie te overschrijven. Update een Git-installatie met `omarchy plugin update io.github.xenophon81.veazy`; voer dependencysetup opnieuw uit als `requirements.txt` is gewijzigd.
 
-The plugin starts in **Demo** mode. It never installs dependencies, scans or connects when the shell starts.
+De bronbestanden staan nu onder `platforms/omarchy/`; het officiële manifest blijft aan de repositoryroot voor bestaande Omarchy-installatie-URL's.
 
-## Connect your Veazy
+## Verbinden en bedienen
 
-1. Click the Veazy icon on the right of the bar.
-2. Select **Bluetooth**, then **Find Veazy**.
-3. Select your `S&B VZ` device and choose **Connect selected device**.
-4. Check its state before using the controls. A new target is sent only when you click **Apply**; heating and boost each require their own explicit action.
+1. Klik op het Veazy-icoon en kies **Bluetooth**.
+2. Kies **Zoek Veazy**, selecteer je `S&B VZ` en verbind. Zoeken en verbinden gebeuren uitsluitend na jouw actie.
+3. Controleer de apparaatstatus. Een bewerkte temperatuur blijft een concept tot **Toepassen**. Verwarmen, stoppen, boost en superboost hebben afzonderlijke knoppen.
 
-Connecting and reconnecting only read device state. Commands are never replayed after a disconnect or worker restart. After connection loss, the heater state is **unknown**; the device can continue heating independently.
+De bediening onderscheidt **basisdoel**, **effectief doel** en **gemeten temperatuur**. De Veazy geeft mogelijk geen echte temperatuurmeting door; dan staat er *Niet beschikbaar*. De oranje ring toont het effectieve doel, nooit een geschatte meting of verzonnen opwarmvoortgang.
 
-## Current limits
+Batterijpercentage verschijnt in het paneel en naast het balkicoon. In demo is het percentage als simulatie herkenbaar. Bij onbekende, verouderde of verbroken status verdwijnt het percentage. **Een verbroken verbinding betekent niet dat het apparaat is gestopt met verwarmen.**
 
-| Area | v0.1.0 behavior |
+Na een timeout of onduidelijke uitkomst zijn wijzigingen geblokkeerd tot een expliciete reconnect. Eén bewuste, zichtbaar onbevestigde heater-uit-opdracht blijft mogelijk. Opdrachten worden nooit automatisch herhaald of na een herstart opnieuw verstuurd.
+
+## Functies en grenzen
+
+| Onderdeel | Gedrag |
 | --- | --- |
-| Live telemetry | Battery, charging, target and heater mode were observed on a real Veazy through BlueZ. |
-| Measured temperature | The tested Veazy returns `0x8000`, meaning unavailable. The panel displays **Not available** and keeps measured temperature separate from target settings. |
-| Temperature range | Base target: 40–210 °C. Effective targets above 210 °C are blocked pending hardware validation, including during boost. |
-| Boost | Superboost uses the base target plus its own offset, following the upstream implementation. Actual firmware behavior remains to be checked. |
-| Settings | Controls depend on fields reported by the device. Charging-current optimization and charging-voltage limiting are separate settings. Hardware writes remain unverified. |
-| Uncertain commands | A timeout or ambiguous result blocks further changes until an explicit reconnect. One explicit, visibly unconfirmed heater-off request remains available. |
-| Device support | Veazy only. Firmware updates, factory reset and other vaporizer models are outside this release. |
+| Bediening | Basisdoel 40–210 °C; expliciet verwarmen/stoppen; boost/superboost met afzonderlijke offsets. |
+| Effectief doel | Tijdelijk begrensd op 210 °C, ook bij wijzigen van offsets of basisdoel in actieve boost. |
+| Instellingen | Alleen uitgelezen vibratie, helderheid, boost- en laadopties; geen fictieve algemene eco-bit. |
+| Gegevens | Firmware, serienummer, runtime, laadtijd en ruwe diagnostiek. |
+| Taal | Nederlands en Engels; GNOME volgt de desktoptaal. |
+| Compatibiliteit | GNOME Shell 46 op Ubuntu 24.04; Omarchy 4.5. Andere GNOME-majeurversies worden niet zonder tests gedeclareerd. |
+| Buiten scope | Firmware-updates, factory reset, andere apparaatmodellen en automatisch verbinden. |
 
-The supported host is Omarchy's built-in bar. Alternate bars, multiple monitors and additional firmware versions still need testing.
-
-## Update or disable
-
-```bash
-omarchy plugin update io.github.xenophon81.veazy
-bash ~/.config/omarchy/plugins/io.github.xenophon81.veazy/scripts/setup-backend
-```
-
-Run dependency setup after an update that changes `requirements.txt`. To disable the icon, use `omarchy plugin disable io.github.xenophon81.veazy`; removal is available through Omarchy's plugin manager. The separate user virtual environment is retained.
-
-## How it works
+## Projectindeling en ontwikkeling
 
 ```text
-Omarchy bar → native QML panel → shared QML service
-                                       ↕ JSON Lines
-                                Python controller
-                                       ↕ Bleak / BlueZ
-                                    Your Veazy
+platforms/gnome/          native GNOME Shell 46-extensie (GJS / St / Cairo)
+platforms/omarchy/        native Omarchy-interface (QML / Quickshell)
+backend/omarchy_veazy/    gedeelde protocolcodec, controller, BlueZ en JSONL-IPC
+manifest.json            officiële Omarchy-pluginroot
+scripts/                 backendsetup, installers, packaging en UI-controles
+tests/                   protocol, fake transport, IPC en GNOME/QML-checks
+docs/                    architectuur, hardwarebewijs en release notes
 ```
 
-The existing Quickshell process hosts the interface. One shared backend serves every panel, keeping presentation, connection management and protocol encoding separate. Bluetooth runs through Linux BlueZ; opening the panel starts no browser or separate application.
-
-## Development
+De Python-pakketnaam en venv-locatie `~/.local/share/omarchy-veazy/venv` blijven behouden voor bestaande installaties. Dependencies staan buiten beide interfaces en worden alleen via expliciete setup geïnstalleerd. Dagelijks gebruik vereist geen roothelper, webserver of aangepaste brede Bluetoothrechten.
 
 ```bash
 PYTHONPATH=backend python3 -m unittest discover -s tests -v
+node tests/gnome/model.test.mjs
+gjs -m tests/gnome/client.js
+python3 scripts/gnome-extension build
+
+# Geïsoleerde GNOME-tests, zonder Bluetooth (X11 gebruikt Xephyr):
+python3 scripts/check-gnome-shell --session wayland
+python3 scripts/check-gnome-shell --session x11
+
+# Op een Omarchy-machine:
 omarchy plugin validate .
 python3 scripts/check-qml
 ```
 
-The tests cover protocol frames, missing data, temperature limits, serialized operations, timeouts, IPC validation and startup without automatic heating. QML checks exercise the mock service, idle worker, helpers and native component compilation. Hardware observations are recorded separately.
+GNOME-tests starten een eigen testshell met tijdelijke configuratie en sluiten die automatisch. Ze vervangen de actieve desktop niet. De Omarchy-laadtest vereist de daar geïnstalleerde shell en Quickshell; op Ubuntu is die niet beschikbaar.
 
-To install a local checkout, run `bash scripts/install-local`, then `bash scripts/setup-backend`. The local installer creates a copy and refuses to overwrite an existing installation. A local copy does not support Git updates; use the GitHub installation above for those.
+Zie [release notes](docs/RELEASE_NOTES.md), [architectuur en onderzoeksbronnen](docs/PROJECT.md), [GNOME-installatie](docs/GNOME.md) en [bijdrage-instructies](AGENTS.md).
 
-Architecture, the implementation plan and detailed evidence are in [docs/PROJECT.md](docs/PROJECT.md) (Nederlands). Contributors should read [AGENTS.md](AGENTS.md). Bug reports are welcome through [GitHub Issues](https://github.com/Xenophon81/omarchy-veazy/issues); include your Omarchy, Python and BlueZ versions, and remove device addresses and serial numbers from logs.
+## Bronnen en licentie
 
-## Credits and license
+Protocolport en visuele inspiratie: **[Reactive Volcano App by Tristan Teufel](https://github.com/firsttris/reactive-volcano-app)**, commit `9d773eff709d721e0e79b403ac2258ba5a851d6c`. De native interfaces, transport, IPC en controller bevatten eigen implementaties. Het GNOME-icoon is oorspronkelijke vectorillustratie; webassets en fonts zijn niet overgenomen.
 
-**[Reactive Volcano App by Tristan Teufel](https://github.com/firsttris/reactive-volcano-app)** provides the upstream Veazy protocol implementation. This project's Python protocol port is based on commit `9d773eff709d721e0e79b403ac2258ba5a851d6c`; the native UI, BlueZ transport, IPC and controller are project-specific adaptations.
+[storz-rs van flakesonnix](https://github.com/flakesonnix/storz-rs), onderzocht op `07bf74be90b705eb3d2caa783542976b16c0f78a`, is een aanvullende protocolreferentie. Dat project vermeldt Veazy als nog niet op hardware getest. Er is geen Rust-code uit overgenomen en er is geen tweede backend toegevoegd.
 
-Distributed under **AGPL-3.0-only**. See [LICENSE](LICENSE) and [NOTICE](NOTICE), including the upstream attribution terms. Omarchy components are imported from the system installation. The project icon and banner are original vector artwork.
+Dit project blijft **AGPL-3.0-only**. [LICENSE](LICENSE) en [NOTICE](NOTICE) bevatten de volledige licentie en upstreamattributie; de native informatiepagina toont de vereiste credits. Onafhankelijk project, niet verbonden aan Storz & Bickel.

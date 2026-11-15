@@ -1,0 +1,92 @@
+/* SPDX-License-Identifier: AGPL-3.0-only
+ * Original native stylesheet. Zinc / ember palette inspired by
+ * Reactive Volcano App by Tristan Teufel; no web stylesheet is embedded.
+ */
+.veazy-menu { color: #fafafa; }
+.veazy-menu .popup-menu-content {
+    background-color: #09090b;
+    border: 1px solid #303034;
+    border-radius: 24px;
+    padding: 0;
+    box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.45);
+}
+.veazy-menu .popup-menu-section { padding: 0; }
+.veazy-body { width: 356px; padding: 22px; spacing: 13px; }
+.veazy-header { spacing: 12px; padding-bottom: 2px; }
+.veazy-logo { color: #f97316; background-color: #29180d; border: 1px solid #42230f; border-radius: 15px; padding: 10px; }
+.veazy-title-group { spacing: 2px; }
+.veazy-title { font-size: 23px; font-weight: 800; }
+.veazy-subtitle { font-size: 11px; color: #a1a1aa; }
+.veazy-battery { border: 1px solid #303034; background-color: #161619; border-radius: 12px; padding: 9px 11px; font-weight: 700; font-size: 15px; }
+.veazy-bar-battery { font-size: 11px; }
+.veazy-button { border: 1px solid #303034; border-radius: 12px; background-color: #1c1c1f; padding: 10px 14px; color: #fafafa; font-weight: 600; }
+.veazy-button:hover { background-color: #2c2c30; border-color: #52525b; }
+.veazy-button:focus { border-color: #fb923c; box-shadow: inset 0 0 0 1px #fb923c; }
+.veazy-button:active { background-color: #3c2c20; }
+.veazy-button:disabled { color: #64646d; background-color: #151517; border-color: #252529; box-shadow: none; }
+.veazy-primary { background-color: #f97316; border-color: #f97316; color: #140b04; }
+.veazy-primary:hover { background-color: #fb923c; border-color: #fb923c; }
+.veazy-primary:active { background-color: #ea580c; }
+.veazy-primary:disabled { color: #77716c; background-color: #30251c; border-color: #3b2a1d; }
+.veazy-segment { background-color: #111113; border: 1px solid #26262a; border-radius: 13px; padding: 4px; spacing: 4px; }
+.veazy-segment-button { background-color: transparent; border-color: transparent; color: #a1a1aa; padding: 7px 12px; border-radius: 9px; font-size: 12px; }
+.veazy-segment-button:checked { color: #fafafa; background-color: #2a2a2e; border-color: #3b3b40; }
+.veazy-mode-notice { font-size: 10px; color: #a1a1aa; }
+.veazy-error { padding: 12px; border: 1px solid #743a2d; background-color: #291812; border-radius: 12px; }
+.veazy-error .veazy-note { color: #fdbba4; }
+.veazy-status-notice { font-size: 11px; color: #fbbf24; padding: 3px 0; }
+.veazy-card { background-color: #111113; border: 1px solid #29292e; border-radius: 17px; padding: 15px; spacing: 12px; }
+.veazy-connection-card { spacing: 12px; }
+.veazy-device-list { spacing: 7px; }
+.veazy-device-row { spacing: 8px; padding-top: 4px; }
+.veazy-device-name { font-size: 11px; color: #d4d4d8; }
+.veazy-connect-button { padding: 7px 11px; font-size: 11px; }
+.veazy-disconnect { padding: 5px 0; background-color: transparent; border-color: transparent; color: #a1a1aa; font-size: 10px; }
+.veazy-tabs { spacing: 4px; padding-top: 2px; border-bottom: 1px solid #26262a; }
+.veazy-tab { background-color: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; color: #a1a1aa; font-size: 12px; padding: 8px 5px 12px; }
+.veazy-tab:checked { color: #fb923c; border-bottom-color: #f97316; }
+.veazy-tab:hover { background-color: #161619; }
+.veazy-page { spacing: 13px; }
+.veazy-gauge { margin-top: 0; }
+.veazy-gauge-text { spacing: 4px; padding-bottom: 7px; }
+.veazy-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 1.1px; color: #a1a1aa; }
+.veazy-temperature { font-size: 66px; font-weight: 300; color: #fafafa; }
+.veazy-heater-status { border-radius: 18px; padding: 5px 11px; font-size: 11px; color: #a1a1aa; background-color: #1c1c1f; }
+.veazy-heater-status:checked { color: #fb923c; background-color: #2e1a0d; }
+.veazy-measurement { padding: 0 7px 4px; spacing: 10px; }
+.veazy-measured-value { color: #d4d4d8; font-size: 11px; }
+.veazy-modes { spacing: 2px; }
+.veazy-mode-button { padding: 11px 7px; background-color: transparent; border-color: transparent; border-radius: 10px; font-size: 11px; color: #a1a1aa; }
+.veazy-mode-button:checked { background-color: #f97316; border-color: #f97316; color: #140b04; }
+.veazy-mode-button:disabled { background-color: transparent; border-color: transparent; color: #64646d; }
+.veazy-target-card { spacing: 11px; }
+.veazy-editor-heading { spacing: 5px; }
+.veazy-draft { color: #fb923c; font-size: 9px; }
+.veazy-target-row { spacing: 7px; }
+.veazy-step { width: 35px; height: 35px; padding: 0; border-radius: 13px; font-size: 25px; font-weight: 400; }
+.veazy-step-plus { color: #fb923c; background-color: #2d1c11; border-color: #5c3216; }
+.veazy-target-entry { width: 88px; font-size: 36px; font-weight: 500; background-color: transparent; color: #fafafa; border: 1px solid transparent; border-radius: 9px; padding: 0 5px; text-align: center; box-shadow: none; }
+.veazy-target-entry:focus { border-color: #f97316; }
+.veazy-unit { font-size: 18px; color: #a1a1aa; padding-right: 10px; }
+.veazy-apply { padding: 8px 12px; font-size: 11px; }
+.veazy-note { font-size: 11px; color: #a1a1aa; }
+.veazy-setting-row { spacing: 10px; border-bottom: 1px solid #26262a; padding: 7px 0 12px; }
+.veazy-setting-name { font-size: 12px; color: #e4e4e7; }
+.veazy-switch { min-width: 38px; padding: 6px 9px; font-size: 10px; }
+.veazy-switch:checked { color: #fb923c; background-color: #301d0f; border-color: #7a401b; }
+.veazy-small-editor { padding: 12px; spacing: 9px; }
+.veazy-small-controls { spacing: 8px; }
+.veazy-small-step { width: 30px; height: 28px; padding: 0; font-size: 20px; font-weight: 400; border-radius: 9px; }
+.veazy-offset-value { font-size: 21px; font-weight: 600; }
+.veazy-small-apply { padding: 6px 9px; font-size: 10px; border-radius: 9px; }
+.veazy-detail-row { spacing: 10px; padding: 4px 0; }
+.veazy-detail-value { font-size: 11px; color: #e4e4e7; }
+.veazy-credits { spacing: 11px; margin-top: 5px; }
+.veazy-credits-title { font-size: 15px; font-weight: 700; }
+.veazy-credit-link { color: #fb923c; font-size: 11px; }
+.veazy-source { font-size: 10px; color: #d4d4d8; }
+
+.veazy-gauge-caption { text-align: center; }
+.veazy-target-value { spacing: 0; }
+
+.veazy-source-link { background-color: transparent; border-color: transparent; color: #d4d4d8; padding: 0; font-size: 10px; font-weight: 400; text-align: left; }
