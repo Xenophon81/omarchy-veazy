@@ -4,11 +4,11 @@
 
 Bedien je Storz & Bickel **Veazy** vanuit de bestaande bovenbalk. Een native paneel toont temperatuurinstellingen, verwarmingsmodi, batterij en apparaatinstellingen. Er draait geen browser of aparte desktopapp.
 
-**Preview 0.2.0** voegt een GNOME Shell-extensie voor **Ubuntu 24.04 LTS / GNOME 46** toe, geschikt voor **X11 en Wayland**. De bestaande Omarchy-plugin blijft beschikbaar. Beide gebruiken dezelfde Python/Bleak-backend en dezelfde protocolbeveiligingen. De GNOME-interface volgt de donkere vormgeving en oranje temperatuurboog van [Reactive Volcano App](https://github.com/firsttris/reactive-volcano-app).
+**Preview 0.3.0** verbetert statusanimaties en updates. Veazy biedt een GNOME Shell-extensie voor **Ubuntu 24.04 LTS / GNOME 46**, geschikt voor **X11 en Wayland**. De bestaande Omarchy-plugin blijft beschikbaar. Beide gebruiken dezelfde Python/Bleak-backend en dezelfde protocolbeveiligingen. De GNOME-interface volgt de donkere vormgeving en oranje temperatuurboog van [Reactive Volcano App](https://github.com/firsttris/reactive-volcano-app).
 
 > Verwarming, temperatuur-, boost- en instellingenwrites zijn met een gesimuleerd transport getest. Hun werking op een fysieke Veazy is nog niet bevestigd. Eerdere hardwarewaarnemingen betreffen passieve telemetrie; zie [hardwaretests](docs/HARDWARE_TESTS.md).
 
-<p align="center"><img src="docs/images/gnome-control.png" alt="De native GNOME-extensie op Ubuntu met een offline demo-Veazy" width="800"><br><sub>GNOME Shell 46 op Ubuntu · offline demo, geen hardwaremeting.</sub></p>
+<p align="center"><img src="docs/images/gnome-control.png" alt="De native GNOME-extensie op Ubuntu met een offline demo-Veazy" width="800"><br><sub>GNOME Shell 46 op Ubuntu · offline demo met opwarm- en laadstatus, geen hardwaremeting.</sub></p>
 
 ## Ubuntu 24.04 LTS installeren
 

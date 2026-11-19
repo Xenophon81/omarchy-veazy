@@ -2,6 +2,8 @@
 
 ## GNOME-animatie en updates — 19 november 2026
 
+Deze wijzigingen worden uitgebracht als **preview 0.3.0**; de README krijgt actuele demoscreenshots. GNOME gebruikt pakketversie 3 en versienaam 0.3.0.
+
 De demokeuze staat voortaan onder Instellingen → Verbindingsmodus; de
 hoofdbediening bevat geen grote Demo/Bluetooth-keuzebalk. Actieve demo blijft
 herkenbaar aan status, demodiscovery en de D in de balk. De veilige

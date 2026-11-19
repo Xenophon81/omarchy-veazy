@@ -1,3 +1,17 @@
+# v0.3.0 — GNOME-statusanimaties en eenvoudiger bijwerken
+
+Preview · 19 november 2026
+
+- Demo/Bluetooth staat onder Instellingen → Verbindingsmodus.
+- Bevestigd opwarmen krijgt een pulserende gloed; boost en superboost eigen kleuren en een buitenaccent. Een bewegende laadindicator toont bevestigd laden.
+- Animaties volgen de GNOME-voorkeur en stoppen bij gesloten paneel, veroudering of uitschakelen.
+- `python3 scripts/gnome-extension update [zip]` werkt expliciet bij met backup. Meld daarna af en opnieuw aan.
+- README-screenshots bijgewerkt naar de huidige native interface; de afbeeldingen tonen uitsluitend offline demo.
+
+De BLE-opdrachten en conservatieve effectieve-doelgrens van 210 °C veranderen niet. Heater-/instellingswrites zijn nog niet hardwaregevalideerd. Passieve telemetrie op Ubuntu is wel waargenomen; zie [HARDWARE_TESTS.md](HARDWARE_TESTS.md).
+
+---
+
 # v0.2.0 — Native GNOME en Omarchy
 
 Preview · 15 november 2026

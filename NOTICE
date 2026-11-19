@@ -27,7 +27,7 @@ Protocol source: firsttris/reactive-volcano-app at
 The native UI, transport, IPC, and controller contain project-specific changes.
 This project distributes its code under AGPL-3.0-only.
 
-Veazy GNOME / Omarchy preview 0.2.0
+Veazy GNOME / Omarchy preview 0.3.0
 The original GNOME Shell interface and vector icon are project additions (2026).
 Its Zinc/ember visual direction is inspired by Reactive Volcano App by Tristan
 Teufel; no upstream web artwork, fonts, or web runtime are bundled.

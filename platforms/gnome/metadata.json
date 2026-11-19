@@ -3,8 +3,8 @@
   "name": "Veazy",
   "description": "Native Storz & Bickel Veazy controls: temperature, heating, battery and Bluetooth, with an offline demo.",
   "shell-version": ["46"],
-  "version": 2,
-  "version-name": "0.2.0",
+  "version": 3,
+  "version-name": "0.3.0",
   "url": "https://github.com/Xenophon81/omarchy-veazy",
   "session-modes": ["user"]
 }
