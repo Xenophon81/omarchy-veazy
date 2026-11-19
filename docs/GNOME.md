@@ -27,6 +27,16 @@ Het pakket bevat alle extensiebestanden, de gedeelde Python-backend, de dependen
 
 ## Eenvoudig bijwerken
 
+Vanaf 0.3.0 toont de paneelkop de **geladen versie**. Onder **Over** kies je
+**Controleer op updates**. Een nieuwere GitHub-preview met een passend pakket
+biedt **Update downloaden en installeren**. Dit controleert de SHA-256-digest en
+pakketversie en bewaart de vorige installatie. Meld daarna af en opnieuw aan.
+Het versienummer bovenaan blijft tot die tijd de geladen versie tonen.
+Er zijn geen achtergrondcontroles of automatische downloads bij shellstart.
+De updater raakt Bluetooth en apparaatinstellingen niet aan. Hij werkt alleen
+de GNOME-installatie bij, niet de Omarchy-plugin of dependencies.
+
+
 Vanuit de bijgewerkte broncode bouw en installeer je met één opdracht:
 
 ```bash

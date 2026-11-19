@@ -4,7 +4,7 @@
 
 Bedien je Storz & Bickel **Veazy** vanuit de bestaande bovenbalk. Een native paneel toont temperatuurinstellingen, verwarmingsmodi, batterij en apparaatinstellingen. Er draait geen browser of aparte desktopapp.
 
-**Preview 0.3.0** verbetert statusanimaties en updates. Veazy biedt een GNOME Shell-extensie voor **Ubuntu 24.04 LTS / GNOME 46**, geschikt voor **X11 en Wayland**. De bestaande Omarchy-plugin blijft beschikbaar. Beide gebruiken dezelfde Python/Bleak-backend en dezelfde protocolbeveiligingen. De GNOME-interface volgt de donkere vormgeving en oranje temperatuurboog van [Reactive Volcano App](https://github.com/firsttris/reactive-volcano-app).
+**Preview 0.3.0** toont de versie bovenaan en voegt statusanimaties en een ingebouwde updatecontrole met downloaden/installeren toe. Veazy biedt een GNOME Shell-extensie voor **Ubuntu 24.04 LTS / GNOME 46**, geschikt voor **X11 en Wayland**. De bestaande Omarchy-plugin blijft beschikbaar. Beide gebruiken dezelfde Python/Bleak-backend en dezelfde protocolbeveiligingen. De GNOME-interface volgt de donkere vormgeving en oranje temperatuurboog van [Reactive Volcano App](https://github.com/firsttris/reactive-volcano-app).
 
 > Verwarming, temperatuur-, boost- en instellingenwrites zijn met een gesimuleerd transport getest. Hun werking op een fysieke Veazy is nog niet bevestigd. Eerdere hardwarewaarnemingen betreffen passieve telemetrie; zie [hardwaretests](docs/HARDWARE_TESTS.md).
 

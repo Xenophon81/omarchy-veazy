@@ -2,11 +2,14 @@
 
 Preview · 19 november 2026
 
+- De paneelkop toont de geladen versie. Onder Over kun je nieuwe GitHub-previews controleren en met één klik downloaden/installeren, met SHA-256-controle en backup. Geen netwerkactie bij shellstart; opnieuw aanmelden laadt de update.
 - Demo/Bluetooth staat onder Instellingen → Verbindingsmodus.
 - Bevestigd opwarmen krijgt een pulserende gloed; boost en superboost eigen kleuren en een buitenaccent. Een bewegende laadindicator toont bevestigd laden.
 - Animaties volgen de GNOME-voorkeur en stoppen bij gesloten paneel, veroudering of uitschakelen.
 - `python3 scripts/gnome-extension update [zip]` werkt expliciet bij met backup. Meld daarna af en opnieuw aan.
 - README-screenshots bijgewerkt naar de huidige native interface; de afbeeldingen tonen uitsluitend offline demo.
+
+Gecontroleerd: 44 Python-tests, JavaScript-modelsuite en 29 native Wayland-controles; actuele screenshots visueel beoordeeld. De extra X11-run slaagt voor versie/updateknoppen maar faalt op de bestaande animatievoorkeurcontrole. Volledige X11-validatie van deze aanvulling blijft open.
 
 De BLE-opdrachten en conservatieve effectieve-doelgrens van 210 °C veranderen niet. Heater-/instellingswrites zijn nog niet hardwaregevalideerd. Passieve telemetrie op Ubuntu is wel waargenomen; zie [HARDWARE_TESTS.md](HARDWARE_TESTS.md).
 

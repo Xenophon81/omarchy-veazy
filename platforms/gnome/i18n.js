@@ -2,7 +2,11 @@
 import GLib from 'gi://GLib';
 
 const en = {
-    connectionMode: 'CONNECTION MODE', updates: 'Updates', updateNotice: 'Open the latest release. Install the downloaded zip, then log out and back in. Your current session stays active.',
+    checkUpdate: 'Check for updates', installUpdate: 'Download and install update',
+    checkingUpdate: 'Checking GitHub…', installingUpdate: 'Downloading and installing…',
+    update_current: 'You have the latest available version.', update_available: 'Update available:',
+    update_installed: 'Installed. Log out and back in to load:', updateFailed: 'Update failed. Try again or open Releases.',
+    connectionMode: 'CONNECTION MODE', updates: 'Updates', updateNotice: 'Check for new previews and install with one click. The previous version is backed up. Log out and back in afterwards. No checks or downloads at startup.',
     control: 'Control', settings: 'Settings', about: 'About', demo: 'Demo', bluetooth: 'Bluetooth',
     disconnected: 'Not connected', scanning: 'Finding your Veazy…', connecting: 'Connecting…',
     initializing: 'Reading device…', disconnecting: 'Disconnecting…', ready: 'Connected', error: 'Connection unavailable',
@@ -35,7 +39,11 @@ const en = {
     valueUnavailable: 'Unavailable', demoReady: 'Demo connected', dismiss: 'Dismiss error',
 };
 const nl = {
-    connectionMode: 'VERBINDINGSMODUS', updates: 'Updates', updateNotice: 'Open de nieuwste release. Installeer de gedownloade zip en meld daarna af en aan. Je huidige sessie blijft actief.',
+    checkUpdate: 'Controleer op updates', installUpdate: 'Update downloaden en installeren',
+    checkingUpdate: 'GitHub controleren…', installingUpdate: 'Downloaden en installeren…',
+    update_current: 'Je hebt de nieuwste beschikbare versie.', update_available: 'Update beschikbaar:',
+    update_installed: 'Geïnstalleerd. Meld af en aan om te laden:', updateFailed: 'Bijwerken mislukt. Probeer opnieuw of open Releases.',
+    connectionMode: 'VERBINDINGSMODUS', updates: 'Updates', updateNotice: 'Controleer op nieuwe previews en installeer met één klik. De vorige versie wordt bewaard. Meld daarna af en aan. Geen controle of download bij het opstarten.',
     control: 'Bediening', settings: 'Instellingen', about: 'Over', demo: 'Demo', bluetooth: 'Bluetooth',
     disconnected: 'Niet verbonden', scanning: 'Je Veazy zoeken…', connecting: 'Verbinden…',
     initializing: 'Apparaat uitlezen…', disconnecting: 'Verbinding verbreken…', ready: 'Verbonden', error: 'Verbinding niet beschikbaar',

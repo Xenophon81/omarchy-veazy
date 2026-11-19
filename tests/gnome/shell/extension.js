@@ -42,6 +42,8 @@ export default class Test extends Extension {
         i.menu.open();
         await pause(300);
         check('panel opens without scanning or connecting', i.menu.isOpen && c.state === 'disconnected');
+        check('header shows loaded version', i._body.get_first_child().get_child_at_index(1).get_first_child().text === `Veazy · ${i._extension.metadata['version-name']}`);
+        check('updater is idle and install hidden until a check', !i._updateProcess && !i._installUpdate.visible && i._checkUpdate.reactive);
         check('mode selection lives in settings', i._demoButton.get_parent().get_parent() === i._pages.settings && !i._pages.settings.visible);
         check('unknown battery is hidden from bar', !i._barBattery.text.includes('%'));
         await screenshot('disconnected');

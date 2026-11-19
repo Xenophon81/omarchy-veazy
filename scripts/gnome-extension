@@ -4,6 +4,11 @@
 from __future__ import annotations
 import argparse
 import json
+import hashlib
+import re
+import urllib.request
+import urllib.error
+import urllib.parse
 import os
 from pathlib import Path, PurePosixPath
 import shutil
@@ -114,6 +119,84 @@ def install(archive_path):
     print(f'bash {destination}/scripts/setup-backend')
 
 
+RELEASE_API = 'https://api.github.com/repos/Xenophon81/omarchy-veazy/releases?per_page=20'
+ASSET_NAME = f'{UUID}.shell-extension.zip'
+
+
+def version_tuple(value):
+    if not isinstance(value, str) or not re.fullmatch(r'v?\d+\.\d+\.\d+', value):
+        raise ValueError('Unexpected release version')
+    return tuple(map(int, value.removeprefix('v').split('.')))
+
+
+def fetch(url, limit):
+    request = urllib.request.Request(url, headers={'User-Agent': 'Veazy-Updater/0.3', 'Accept': 'application/vnd.github+json'})
+    with urllib.request.urlopen(request, timeout=20) as response:
+        if not response.url.startswith('https://'):
+            raise ValueError('Insecure release redirect')
+        data = response.read(limit + 1)
+    if len(data) > limit:
+        raise ValueError('Release response too large')
+    return data
+
+
+def select_release(releases, current):
+    current_version = version_tuple(current)
+    candidates = []
+    for release in releases:
+        if release.get('draft'):
+            continue
+        try:
+            version = version_tuple(release.get('tag_name'))
+        except ValueError:
+            continue
+        if version <= current_version:
+            continue
+        for asset in release.get('assets', []):
+            if asset.get('name') != ASSET_NAME:
+                continue
+            url = asset.get('browser_download_url', '')
+            prefix = 'https://github.com/Xenophon81/omarchy-veazy/releases/download/'
+            digest = asset.get('digest', '')
+            if (not url.startswith(prefix) or not urllib.parse.unquote(url).endswith('/' + ASSET_NAME)
+                    or not re.fullmatch(r'sha256:[0-9a-f]{64}', digest)
+                    or not isinstance(asset.get('size'), int) or not 0 < asset['size'] <= 10 * 1024 * 1024):
+                continue
+            candidates.append((version, release['tag_name'], asset))
+    return max(candidates, key=lambda item: item[0]) if candidates else None
+
+
+def online_update(current, apply=False):
+    # Includes explicit preview releases; never invoked at shell start.
+    releases = json.loads(fetch(RELEASE_API, 2 * 1024 * 1024))
+    if not isinstance(releases, list):
+        raise ValueError('Unexpected releases response')
+    selected = select_release(releases, current)
+    if selected is None:
+        print(json.dumps({'status': 'current'}))
+        return
+    _, tag, asset = selected
+    if not apply:
+        print(json.dumps({'status': 'available', 'version': tag}))
+        return
+    payload = fetch(asset['browser_download_url'], 10 * 1024 * 1024)
+    if len(payload) != asset['size'] or hashlib.sha256(payload).hexdigest() != asset['digest'][7:]:
+        raise ValueError('Release checksum mismatch')
+    with tempfile.TemporaryDirectory(prefix='veazy-update-') as folder:
+        archive = Path(folder) / ASSET_NAME
+        archive.write_bytes(payload)
+        with zipfile.ZipFile(archive) as package:
+            metadata = json.loads(package.read('metadata.json'))
+            if version_tuple(metadata.get('version-name')) != version_tuple(tag):
+                raise ValueError('Release metadata version mismatch')
+        # Keep stdout machine-readable for the native UI.
+        import contextlib
+        import io
+        with contextlib.redirect_stdout(io.StringIO()):
+            install(archive)
+    print(json.dumps({'status': 'installed', 'version': tag}))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='action', required=True)
@@ -123,9 +206,14 @@ def main():
     install_parser.add_argument('archive', type=Path, nargs='?', default=DEFAULT_ZIP)
     update_parser = sub.add_parser('update', help='Build and install local sources, or install a downloaded release zip')
     update_parser.add_argument('archive', type=Path, nargs='?')
+    online_parser = sub.add_parser('online', help='Check GitHub previews; download/install only with --apply')
+    online_parser.add_argument('--current', required=True)
+    online_parser.add_argument('--apply', action='store_true')
     args = parser.parse_args()
     try:
-        if args.action == 'build':
+        if args.action == 'online':
+            online_update(args.current, args.apply)
+        elif args.action == 'build':
             build(args.output)
         elif args.action == 'update':
             if args.archive is None:
@@ -133,7 +221,7 @@ def main():
             install(args.archive or DEFAULT_ZIP)
         else:
             install(args.archive)
-    except (OSError, ValueError, KeyError, zipfile.BadZipFile) as error:
+    except (OSError, ValueError, KeyError, zipfile.BadZipFile, urllib.error.URLError) as error:
         parser.exit(1, f'Error: {error}\n')
 
 

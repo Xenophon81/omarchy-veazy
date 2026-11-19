@@ -2,6 +2,10 @@
 
 ## GNOME-animatie en updates — 19 november 2026
 
+Verificatie van deze aanvulling: 44 Python-tests, de JavaScript-modelsuite en 29 native Wayland-controles slagen. De alleen-lezen GitHub-controle vindt v0.3.0. De extra X11-run slaagt voor versie/updateknoppen maar faalt op de bestaande controle voor het opnieuw starten van animatie na wijziging van de shellvoorkeur; volledige X11-validatie van deze aanvulling blijft dus open.
+
+De paneelkop toont de geladen metadata-versie. De GNOME-updater controleert op expliciete actie GitHub-previews; downloaden/installeren vraagt een afzonderlijke klik en verifieert SHA-256 en pakketversie. Geen controle bij shellstart, geen Bluetooth-acties.
+
 Deze wijzigingen worden uitgebracht als **preview 0.3.0**; de README krijgt actuele demoscreenshots. GNOME gebruikt pakketversie 3 en versienaam 0.3.0.
 
 De demokeuze staat voortaan onder Instellingen → Verbindingsmodus; de

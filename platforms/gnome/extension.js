@@ -93,7 +93,7 @@ const VeazyIndicator = GObject.registerClass(class VeazyIndicator extends PanelM
         const logo = new St.Bin({style_class: 'veazy-logo', child: new St.Icon({gicon: icon, icon_size: 25})});
         header.add_child(logo);
         const title = box(true, 'veazy-title-group', {x_expand: true});
-        title.add_child(label('Veazy', 'veazy-title'));
+        title.add_child(label(`Veazy · ${this._extension.metadata['version-name'] ?? this._extension.metadata.version}`, 'veazy-title'));
         this._connectionLabel = label('', 'veazy-subtitle');
         title.add_child(this._connectionLabel);
         header.add_child(title);
@@ -297,8 +297,15 @@ const VeazyIndicator = GObject.registerClass(class VeazyIndicator extends PanelM
         const credits = box(true, 'veazy-card veazy-credits');
         credits.add_child(label(t('native'), 'veazy-credits-title'));
         credits.add_child(label(`Veazy ${this._extension.metadata['version-name'] ?? this._extension.metadata.version} · GNOME Shell 46`, 'veazy-note'));
+        this._checkUpdate = button(t('checkUpdate'), () => this._runUpdate(false));
+        credits.add_child(this._checkUpdate);
+        this._installUpdate = button(t('installUpdate'), () => this._runUpdate(true));
+        this._installUpdate.visible = false;
+        credits.add_child(this._installUpdate);
+        this._updateStatus = wrapped('');
+        credits.add_child(this._updateStatus);
         credits.add_child(button(t('updates'), () => {
-            Gio.AppInfo.launch_default_for_uri('https://github.com/Xenophon81/omarchy-veazy/releases/latest', null);
+            Gio.AppInfo.launch_default_for_uri('https://github.com/Xenophon81/omarchy-veazy/releases', null);
         }));
         credits.add_child(wrapped(t('updateNotice')));
         credits.add_child(wrapped(t('aboutText')));
@@ -311,6 +318,46 @@ const VeazyIndicator = GObject.registerClass(class VeazyIndicator extends PanelM
         credits.add_child(wrapped(t('license')));
         page.add_child(credits);
         page.add_child(wrapped(t('hardware')));
+    }
+
+    _runUpdate(apply) {
+        if (this._updateProcess) return;
+        const t = this._t;
+        this._updateStatus.text = t(apply ? 'installingUpdate' : 'checkingUpdate');
+        sensitive(this._checkUpdate, false);
+        sensitive(this._installUpdate, false);
+        try {
+            const argv = ['python3', `${this._extension.path}/scripts/gnome-extension`,
+                'online', '--current', String(this._extension.metadata['version-name'])];
+            if (apply) argv.push('--apply');
+            const process = Gio.Subprocess.new(argv,
+                Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE);
+            this._updateProcess = process;
+            process.communicate_utf8_async(null, null, (source, result) => {
+                try {
+                    const [, stdout] = source.communicate_utf8_finish(result);
+                    if (this._updateDestroyed) return;
+                    if (!source.get_successful() || stdout.length > 4096) throw new Error('Update failed');
+                    const data = JSON.parse(stdout);
+                    if (!['current', 'available', 'installed'].includes(data.status)) throw new Error('Invalid update response');
+                    this._installUpdate.visible = data.status === 'available';
+                    this._updateStatus.text = t(`update_${data.status}`) +
+                        (typeof data.version === 'string' ? ` ${data.version.slice(0, 32)}` : '');
+                } catch (_) {
+                    if (!this._updateDestroyed) this._updateStatus.text = t('updateFailed');
+                } finally {
+                    this._updateProcess = null;
+                    if (!this._updateDestroyed) {
+                        sensitive(this._checkUpdate, true);
+                        sensitive(this._installUpdate, true);
+                    }
+                }
+            });
+        } catch (_) {
+            this._updateStatus.text = t('updateFailed');
+            sensitive(this._checkUpdate, true);
+            sensitive(this._installUpdate, true);
+        }
     }
 
     _selectTab(key) {
@@ -537,6 +584,8 @@ const VeazyIndicator = GObject.registerClass(class VeazyIndicator extends PanelM
     }
 
     destroy() {
+        this._updateDestroyed = true;
+        // Reap via communicate callback; allow an atomic installation to finish.
         if (this._animationId) GLib.Source.remove(this._animationId);
         this._animationId = 0;
         this._settings.disconnect(this._animationSignal);
