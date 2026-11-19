@@ -31,7 +31,7 @@ def sources():
             if not path.is_file() or '__pycache__' in relative.parts or path.suffix in {'.pyc', '.pyo'}:
                 continue
             result[(prefix / relative).as_posix()] = path
-    for name in ['scripts/run-backend', 'scripts/setup-backend', 'requirements.txt', 'LICENSE', 'NOTICE']:
+    for name in ['scripts/run-backend', 'scripts/setup-backend', 'scripts/gnome-extension', 'requirements.txt', 'LICENSE', 'NOTICE']:
         path = ROOT / name
         if not path.is_file() or path.is_symlink():
             raise ValueError(f'Required package file missing: {name}')
@@ -121,9 +121,18 @@ def main():
     build_parser.add_argument('--output', type=Path, default=DEFAULT_ZIP)
     install_parser = sub.add_parser('install')
     install_parser.add_argument('archive', type=Path, nargs='?', default=DEFAULT_ZIP)
+    update_parser = sub.add_parser('update', help='Build and install local sources, or install a downloaded release zip')
+    update_parser.add_argument('archive', type=Path, nargs='?')
     args = parser.parse_args()
     try:
-        build(args.output) if args.action == 'build' else install(args.archive)
+        if args.action == 'build':
+            build(args.output)
+        elif args.action == 'update':
+            if args.archive is None:
+                build(DEFAULT_ZIP)
+            install(args.archive or DEFAULT_ZIP)
+        else:
+            install(args.archive)
     except (OSError, ValueError, KeyError, zipfile.BadZipFile) as error:
         parser.exit(1, f'Error: {error}\n')
 

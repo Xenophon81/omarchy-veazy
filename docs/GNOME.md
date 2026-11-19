@@ -25,9 +25,51 @@ Het pakket bevat alle extensiebestanden, de gedeelde Python-backend, de dependen
 
 `XDG_DATA_HOME` wordt ondersteund voor zowel extensie als dependencysetup. Het bewaarde venv-pad is `$XDG_DATA_HOME/omarchy-veazy/venv` (standaard `~/.local/share/omarchy-veazy/venv`), zodat Omarchy en GNOME dezelfde dependencies kunnen gebruiken. De twee interfaces moeten niet tegelijk hetzelfde apparaat verbinden; er is geen inter-desktop-verbindingscoördinatie.
 
+## Eenvoudig bijwerken
+
+Vanuit de bijgewerkte broncode bouw en installeer je met één opdracht:
+
+```bash
+python3 scripts/gnome-extension update
+```
+
+Dit gebruikt de lokale broncode; haal nieuwe commits eerst bewust op met
+`git pull --ff-only`. De opdracht downloadt geen dependencies, start geen worker
+of shell en bewaart de vorige installatie als backup. Meld daarna zelf af en
+opnieuw aan om de nieuwe JavaScript-modules te laden.
+
+Onder **Over → Updates** opent de widget de nieuwste GitHub-release. Met de
+hier toegevoegde updater kun je een gedownloade release installeren:
+
+```bash
+python3 ~/.local/share/gnome-shell/extensions/veazy@xenophon81.github.io/scripts/gnome-extension update ~/Downloads/veazy@xenophon81.github.io.shell-extension.zip
+```
+
+Gebruik bij een bestaande 0.2.0-installatie eerst `gnome-extensions install
+--force <pad-naar-zip>`; die oudere versie bevat de updater nog niet. Bij een
+ander `XDG_DATA_HOME` pas je het installatiepad aan. Bijwerken verandert de
+apparaatinstellingen niet. Plan afmelden wanneer je klaar bent met de actieve
+verbinding; afmelden bevestigt niet dat de verwarming uit is.
+
+## Animatie en statuskleuren
+
+Tijdens bevestigd opwarmen pulseert een oranje gloed rond de doelboog. Zodra het
+apparaat doel-bereikt meldt, stopt de puls. Boost krijgt violet en een bewegend
+buitenaccent, superboost roze. Een groene bewegende balk onder de accu geeft
+bevestigd laden aan. De beweging volgt GNOME's animatievoorkeur en loopt alleen
+terwijl het paneel open is. Bij veroudering of disconnect stopt zij direct.
+
+De boog blijft het effectieve doel tonen, geen geschatte opwarmvoortgang. Zonder
+gemeten temperatuur en met verwarming uit is de kleur neutraal: uit betekent
+niet koud. Alleen een beschikbare meting onder 40 °C krijgt blauw; een meting
+vanaf 40 °C oranje. Deze grens is een visuele keuze, geen aanraakveiligheidsgrens.
+Modus en status blijven ook in tekst zichtbaar.
+
 ## Eerste gebruik
 
-De extensie start in herkenbare **Demo**. Kies **Ontdek de demo**, dan **Verbind** bij het gevonden demoapparaat. Dit start geen Python-worker en geen BLE-actie. Wisselen naar **Bluetooth** start één nog niet verbonden worker. Vervolgens kies je zelf zoeken, een gevonden apparaat en verbinden.
+De extensie start in herkenbare **Demo**. De keuze **Demo / Bluetooth** staat
+onder **Instellingen → Verbindingsmodus**, zodat deze testfunctie geen ruimte
+inneemt boven de dagelijkse bediening. Kies **Ontdek de demo**, dan **Verbind** bij het gevonden demoapparaat. Dit start geen Python-worker en geen BLE-actie. Wisselen naar **Bluetooth** start één nog niet verbonden worker. Vervolgens kies je zelf zoeken, een gevonden apparaat en verbinden.
 
 Bewerk het basisdoel met de invoer of plus/min; **Toepassen** is een aparte actie. **Verwarm**, **Uit**, **Boost** en **Superboost** sturen elk een absolute modus. Een doeltemperatuur instellen start geen verwarming. Instellingswijzigingen en de vindfunctie vragen eveneens een expliciete bediening.
 

@@ -27,7 +27,7 @@ class GnomePackageTests(unittest.TestCase):
                     self.assertIn(name, files)
                 self.assertFalse(any('__pycache__' in f or f.endswith('.qml') or 'venv/' in f for f in files))
             env = os.environ | {'XDG_DATA_HOME': str(temp / 'data'), 'OMARCHY_VEAZY_WORKER_SESSION': 'package-test'}
-            subprocess.run([sys.executable, SCRIPT, 'install', archive], env=env, check=True, capture_output=True)
+            subprocess.run([sys.executable, SCRIPT, 'update', archive], env=env, check=True, capture_output=True)
             target = temp / 'data/gnome-shell/extensions' / UUID
             (target / 'old-installation').write_text('preserve me')
             subprocess.run([sys.executable, SCRIPT, 'install', archive], env=env, check=True, capture_output=True)

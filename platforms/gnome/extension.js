@@ -2,6 +2,7 @@
 // Original native St UI; visual direction: Reactive Volcano App by Tristan Teufel.
 import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Pango from 'gi://Pango';
 import St from 'gi://St';
@@ -54,6 +55,9 @@ const VeazyIndicator = GObject.registerClass(class VeazyIndicator extends PanelM
         this._offsetDrafts = {};
         this._devicesKey = '';
         this._tab = 'control';
+        this._animationId = 0;
+        this._settings = St.Settings.get();
+        this._animationSignal = this._settings.connect('notify::enable-animations', () => this._syncAnimation());
         const icon = new Gio.FileIcon({file: Gio.File.new_for_path(`${extension.path}/assets/veazy-symbolic.svg`)});
         const bar = box(false, 'panel-status-menu-box');
         bar.add_child(new St.Icon({gicon: icon, style_class: 'system-status-icon'}));
@@ -70,6 +74,7 @@ const VeazyIndicator = GObject.registerClass(class VeazyIndicator extends PanelM
                 this._scroll.set_style(`max-height: ${Math.max(240, Math.floor(monitor.height / St.ThemeContext.get_for_stage(global.stage).scale_factor) - 100)}px;`);
                 this._render();
             }
+            this._syncAnimation();
         });
         this._render();
     }
@@ -93,18 +98,14 @@ const VeazyIndicator = GObject.registerClass(class VeazyIndicator extends PanelM
         title.add_child(this._connectionLabel);
         header.add_child(title);
         this._battery = label('—', 'veazy-battery');
-        header.add_child(this._battery);
+        const batteryBox = box(true, 'veazy-battery-group');
+        batteryBox.add_child(this._battery);
+        this._chargeTrack = new St.DrawingArea({height: 5, x_expand: true});
+        this._chargeTrack.connect('repaint', area => this._paintCharge(area));
+        batteryBox.add_child(this._chargeTrack);
+        header.add_child(batteryBox);
         this._body.add_child(header);
 
-        const modeRow = box(false, 'veazy-segment');
-        this._demoButton = button(t('demo'), () => this._client.setMode('mock'), 'veazy-segment-button');
-        this._liveButton = button(t('bluetooth'), () => this._client.setMode('live'), 'veazy-segment-button');
-        this._demoButton.x_expand = this._liveButton.x_expand = true;
-        modeRow.add_child(this._demoButton);
-        modeRow.add_child(this._liveButton);
-        this._body.add_child(modeRow);
-        this._modeNotice = wrapped(t('demoNotice'), 'veazy-mode-notice');
-        this._body.add_child(this._modeNotice);
 
         this._errorBox = box(true, 'veazy-error');
         this._errorLabel = wrapped('');
@@ -223,6 +224,18 @@ const VeazyIndicator = GObject.registerClass(class VeazyIndicator extends PanelM
     _buildSettings() {
         const t = this._t;
         const page = this._pages.settings;
+        page.add_child(label(t('connectionMode'), 'veazy-eyebrow'));
+        const modeRow = box(false, 'veazy-segment');
+        this._demoButton = button(t('demo'), () => this._client.setMode('mock'), 'veazy-segment-button');
+        this._liveButton = button(t('bluetooth'), () => this._client.setMode('live'), 'veazy-segment-button');
+        this._demoButton.x_expand = this._liveButton.x_expand = true;
+        modeRow.add_child(this._demoButton);
+        modeRow.add_child(this._liveButton);
+        page.add_child(modeRow);
+        this._modeNotice = wrapped(t('demoNotice'), 'veazy-mode-notice');
+        page.add_child(this._modeNotice);
+
+
         page.add_child(label(t('deviceSettings'), 'veazy-eyebrow'));
         page.add_child(wrapped(t('settingsNotice')));
         this._settingButtons = {};
@@ -283,7 +296,11 @@ const VeazyIndicator = GObject.registerClass(class VeazyIndicator extends PanelM
         page.add_child(this._diagnoseButton);
         const credits = box(true, 'veazy-card veazy-credits');
         credits.add_child(label(t('native'), 'veazy-credits-title'));
-        credits.add_child(label(t('version'), 'veazy-note'));
+        credits.add_child(label(`Veazy ${this._extension.metadata['version-name'] ?? this._extension.metadata.version} · GNOME Shell 46`, 'veazy-note'));
+        credits.add_child(button(t('updates'), () => {
+            Gio.AppInfo.launch_default_for_uri('https://github.com/Xenophon81/omarchy-veazy/releases/latest', null);
+        }));
+        credits.add_child(wrapped(t('updateNotice')));
         credits.add_child(wrapped(t('aboutText')));
         credits.add_child(label(t('credits'), 'veazy-eyebrow'));
         credits.add_child(wrapped(t('attribution'), 'veazy-credit-link'));
@@ -302,6 +319,7 @@ const VeazyIndicator = GObject.registerClass(class VeazyIndicator extends PanelM
             this._pages[name].visible = name === key;
             active(this._tabs[name], name === key);
         }
+        this._syncAnimation();
     }
 
     _changeTarget(delta) {
@@ -334,29 +352,91 @@ const VeazyIndicator = GObject.registerClass(class VeazyIndicator extends PanelM
         this._targetEntry.reactive = this._targetEntry.can_focus = this._client.canControl;
     }
 
+    _visualState() {
+        const c = this._client;
+        const s = c?.snapshot ?? {};
+        const fresh = c?.state === 'ready' && !c.stale;
+        const heating = fresh && s.heater_mode > 0;
+        // Heater-off is not evidence that the device has cooled down.
+        const measured = fresh && typeof s.current_temperature_c === 'number';
+        const color = !fresh ? [0.4, 0.4, 0.45]
+            : s.heater_mode === 3 ? [0.96, 0.30, 0.65]
+            : s.heater_mode === 2 ? [0.65, 0.40, 1]
+            : heating || (measured && s.current_temperature_c >= 40) ? [0.98, 0.45, 0.09]
+            : measured ? [0.22, 0.72, 0.95] : [0.55, 0.55, 0.60];
+        return {fresh, heating, color, charging: fresh && s.charging === true,
+            warming: heating && s.setpoint_reached === false,
+            boost: heating && s.heater_mode >= 2};
+    }
+
+    _syncAnimation() {
+        const v = this._visualState();
+        const animate = this.menu.isOpen && this._settings.enable_animations &&
+            (v.charging || (this._tab === 'control' && (v.warming || v.boost)));
+        if (!animate && this._animationId) {
+            GLib.Source.remove(this._animationId);
+            this._animationId = 0;
+        } else if (animate && !this._animationId) {
+            this._animationId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
+                this._ring.queue_repaint();
+                this._chargeTrack.queue_repaint();
+                return GLib.SOURCE_CONTINUE;
+            });
+        }
+        this._ring.queue_repaint();
+        this._chargeTrack.queue_repaint();
+    }
+
+    _paintCharge(area) {
+        const [w, h] = area.get_surface_size();
+        const cr = area.get_context();
+        const v = this._visualState();
+        cr.setSourceRGBA(0.16, 0.16, 0.19, 1);
+        cr.rectangle(0, 0, w, h); cr.fill();
+        if (v.charging) {
+            const phase = this._animationId ? (GLib.get_monotonic_time() / 2000000) % 1 : 0.5;
+            cr.setSourceRGBA(0.20, 0.83, 0.60, 1);
+            for (const shift of [-1, 0, 1]) {
+                cr.rectangle((phase + shift) * w, 0, w * 0.35, h); cr.fill();
+            }
+        }
+        cr.$dispose();
+    }
+
     _paintRing(area) {
         const [width, height] = area.get_surface_size();
         const cr = area.get_context();
-        const radius = Math.min(width / 2 - 18, height / 2 - 7);
+        const radius = Math.min(width / 2 - 18, height / 2 - 14);
         const cx = width / 2;
         const cy = height / 2 + 4;
         const start = Math.PI * 0.75;
         const length = Math.PI * 1.5;
-        cr.setLineWidth(7);
         cr.setLineCap(1);
-        cr.setSourceRGBA(0.145, 0.145, 0.165, 1);
-        cr.arc(cx, cy, radius, start, start + length);
-        cr.stroke();
-        const client = this._client;
-        const s = client?.snapshot;
-        const fresh = client?.state === 'ready' && !client.stale;
+        const arc = (lineWidth, color, alpha, from, to, r = radius) => {
+            cr.setLineWidth(lineWidth);
+            cr.setSourceRGBA(...color, alpha);
+            cr.arc(cx, cy, r, from, to); cr.stroke();
+        };
+        arc(7, [0.145, 0.145, 0.165], 1, start, start + length);
+        const s = this._client?.snapshot;
+        const v = this._visualState();
         const offset = s?.heater_mode === 2 ? s.boost_offset_c : s?.heater_mode === 3 ? s.superboost_offset_c : 0;
-        const target = fresh && typeof s?.target_temperature_c === 'number' && typeof offset === 'number' ? s.target_temperature_c + offset : null;
+        const target = v.fresh && Number.isInteger(s?.heater_mode) && typeof s?.target_temperature_c === 'number' && typeof offset === 'number' ? s.target_temperature_c + offset : null;
         if (target !== null) {
-            const fraction = Math.max(0.01, Math.min(1, (target - 40) / 170));
-            cr.setSourceRGBA(0.976, 0.451, 0.086, s.heater_mode > 0 ? 1 : 0.55);
-            cr.arc(cx, cy, radius, start, start + length * fraction);
-            cr.stroke();
+            const end = start + length * Math.max(0.01, Math.min(1, (target - 40) / 170));
+            const seconds = this._animationId ? GLib.get_monotonic_time() / 1000000 : 0;
+            const pulse = v.warming ? 0.5 + 0.5 * Math.sin(seconds * Math.PI * 1.4) : 0.4;
+            if (v.heating) {
+                arc(23, v.color, 0.04 + pulse * 0.06, start, end);
+                arc(15, v.color, 0.08 + pulse * 0.12, start, end);
+            }
+            arc(7, v.color, 1, start, end);
+            if (v.boost) {
+                // A moving outer accent denotes mode, never measured progress.
+                const phase = this._animationId ? (seconds / 2) % 1 : 0.5;
+                const from = start + phase * (length - 0.35);
+                arc(3, v.color, 0.85, from, from + 0.35, radius + 11);
+            }
         }
         cr.$dispose();
     }
@@ -419,8 +499,9 @@ const VeazyIndicator = GObject.registerClass(class VeazyIndicator extends PanelM
         const effective = fresh && Number.isInteger(s.heater_mode) && typeof s.target_temperature_c === 'number' && typeof offset === 'number'
             ? s.target_temperature_c + offset : null;
         this._temperature.text = effective === null ? '—' : `${effective}°`;
+        this._heaterStatus.set_style(`color: rgb(${this._visualState().color.map(value => Math.round(value * 255)).join(',')});`);
         this._heaterStatus.text = !fresh || !Number.isInteger(s.heater_mode) ? t('unknown')
-            : s.heater_mode === 0 ? t('off') : s.setpoint_reached ? t('reached') : t('heating');
+            : s.heater_mode === 0 ? t('off') : `${s.heater_mode >= 2 ? t(s.heater_mode === 3 ? 'superboost' : 'boost') + ' · ' : ''}${t(s.setpoint_reached === true ? 'reached' : s.setpoint_reached === false ? 'heating' : 'unknown')}`;
         active(this._heaterStatus, fresh && s.heater_mode > 0);
         this._measured.text = fresh && typeof s.current_temperature_c === 'number' ? `${s.current_temperature_c} °C` : t('unavailable');
         for (const [mode, actor] of this._modeButtons.entries()) {
@@ -452,10 +533,13 @@ const VeazyIndicator = GObject.registerClass(class VeazyIndicator extends PanelM
         }
         sensitive(this._findButton, c.canControl);
         sensitive(this._diagnoseButton, c.canControl);
-        this._ring.queue_repaint();
+        this._syncAnimation();
     }
 
     destroy() {
+        if (this._animationId) GLib.Source.remove(this._animationId);
+        this._animationId = 0;
+        this._settings.disconnect(this._animationSignal);
         this._client?.destroy();
         this._client = null;
         super.destroy();

@@ -1,5 +1,28 @@
 # Hardware observations
 
+## 19 November 2026 — passive telemetry with the GNOME widget
+
+The user reported that the Veazy was powered on, charging and displaying data in
+the GNOME widget. With that existing connection, `scripts/check-device-readonly
+--seconds 8` observed 14 new STATUS notifications and one cached STATUS sample.
+The observer sent **zero GATT operations**; it did not scan or connect.
+
+| Check | Observation |
+| --- | --- |
+| Notifications | `Notifying=true`; 14 new STATUS frames in eight seconds |
+| Characteristic flags | `write-without-response`, `write`, `notify` |
+| Battery | 32%, charging true; historical sample only |
+| Base target | 210 °C |
+| Boost / superboost offsets | 15 / 15 °C |
+| Heater | Mode `0`, off; powered on does not mean heating |
+| Measured temperature | Sentinel `0x8000`, decoded as unavailable |
+
+This confirms live read telemetry alongside the user's GNOME widget on the
+Ubuntu host. No target, heater or settings mutations were tested. Heating,
+boost semantics and settings writes remain unvalidated on hardware, and the
+conservative 210 °C effective-target limit remains in place. Device identifiers
+are omitted.
+
 ## 5 November 2026 — first passive Veazy telemetry check
 
 Environment: Omarchy `4.5.0-3`, Quickshell `0.3.2.r7.g2b4501a-1`, BlueZ `5.87`, Python `3.14.8`, Bleak `3.0.2`, dbus-fast `5.2.0`, Intel `MacBookPro15,2`.

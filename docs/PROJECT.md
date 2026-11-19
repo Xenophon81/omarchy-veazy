@@ -1,5 +1,39 @@
 # Veazy — GNOME en Omarchy
 
+## GNOME-animatie en updates — 19 november 2026
+
+De demokeuze staat voortaan onder Instellingen → Verbindingsmodus; de
+hoofdbediening bevat geen grote Demo/Bluetooth-keuzebalk. Actieve demo blijft
+herkenbaar aan status, demodiscovery en de D in de balk. De veilige
+mockstart en expliciete verbindingsacties blijven behouden.
+
+De GNOME-presentatie krijgt een pulserende opwarmgloed op bevestigde status,
+boost-/superboostkleuren met buitenaccent en een geanimeerde laadindicator.
+Geen schatting van gemeten temperatuur; heater-uit zonder meting blijft
+neutraal. Animaties volgen de shellvoorkeur, stoppen bij gesloten paneel of
+veroudering en worden verwijderd bij disable. Alleen presentatie verandert;
+BLE-opdrachten en de 210 °C-grens blijven gelijk. Een expliciete
+`gnome-extension update [zip]` bouwt/installeert lokale bronnen of installeert
+een gekozen release met backup. Geen automatische downloads of shellherstart.
+Zie [GNOME](GNOME.md) voor de heraanmelding en eerste update vanaf 0.2.0.
+Verificatie: twee pakket-/installatietests en de JavaScript-modelsuite slagen;
+GNOME 46 Wayland slaagt met 26 native controles inclusief animatievoorkeur,
+X11 met 24 controles vóór toevoeging van die twee voorkeurscontroles.
+Opwarm- en boostscreenshots zijn visueel beoordeeld. De tests gebruiken
+simulatie zonder Bluetooth. De gebruikersinstallatie is daarna op expliciet verzoek bijgewerkt met backup;
+de actieve shell is niet herstart. De nieuwe code wordt na afmelden/aanmelden
+geladen. De definitieve Wayland-run slaagt met 27 native controles, inclusief
+de plaatsing van de demokeuze.
+
+## Hardwarevervolg — 19 november 2026
+
+Passieve uitlezing op de Ubuntu-host met de verbonden GNOME-widget is bevestigd:
+14 nieuwe STATUS-notifications in acht seconden, accu 32%, laden actief,
+basisdoel 210 °C, heatermodus uit en meetsentinel `0x8000`. De observer stuurde
+nul GATT-opdrachten. Dit valideert geen heater-/instellingswrites of
+boostsemantiek; die blijven open, evenals de conservatieve effectieve-doelgrens
+van 210 °C. Zie [hardwarewaarnemingen](HARDWARE_TESTS.md).
+
 ## Huidige platformuitbreiding — 15 november 2026
 
 **Preview 0.2.0** voegt op verzoek van de gebruiker native GNOME-bediening voor Ubuntu 24.04 LTS toe, naast Omarchy. De gebruiker werkt op X11; Wayland gebruikt dezelfde native interface. De bestaande Python/Bleak-controller blijft gedeeld. Geen Rust-backend, browserruntime, aparte desktopapp of vervangende balk.

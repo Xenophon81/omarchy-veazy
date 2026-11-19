@@ -2,6 +2,7 @@
 import GLib from 'gi://GLib';
 
 const en = {
+    connectionMode: 'CONNECTION MODE', updates: 'Updates', updateNotice: 'Open the latest release. Install the downloaded zip, then log out and back in. Your current session stays active.',
     control: 'Control', settings: 'Settings', about: 'About', demo: 'Demo', bluetooth: 'Bluetooth',
     disconnected: 'Not connected', scanning: 'Finding your Veazy…', connecting: 'Connecting…',
     initializing: 'Reading device…', disconnecting: 'Disconnecting…', ready: 'Connected', error: 'Connection unavailable',
@@ -34,6 +35,7 @@ const en = {
     valueUnavailable: 'Unavailable', demoReady: 'Demo connected', dismiss: 'Dismiss error',
 };
 const nl = {
+    connectionMode: 'VERBINDINGSMODUS', updates: 'Updates', updateNotice: 'Open de nieuwste release. Installeer de gedownloade zip en meld daarna af en aan. Je huidige sessie blijft actief.',
     control: 'Bediening', settings: 'Instellingen', about: 'Over', demo: 'Demo', bluetooth: 'Bluetooth',
     disconnected: 'Niet verbonden', scanning: 'Je Veazy zoeken…', connecting: 'Verbinden…',
     initializing: 'Apparaat uitlezen…', disconnecting: 'Verbinding verbreken…', ready: 'Verbonden', error: 'Verbinding niet beschikbaar',

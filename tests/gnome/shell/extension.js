@@ -42,6 +42,7 @@ export default class Test extends Extension {
         i.menu.open();
         await pause(300);
         check('panel opens without scanning or connecting', i.menu.isOpen && c.state === 'disconnected');
+        check('mode selection lives in settings', i._demoButton.get_parent().get_parent() === i._pages.settings && !i._pages.settings.visible);
         check('unknown battery is hidden from bar', !i._barBattery.text.includes('%'));
         await screenshot('disconnected');
         c.scan(); await pause(350);
@@ -60,6 +61,22 @@ export default class Test extends Extension {
         await screenshot('control');
         i._modeButtons[1].emit('clicked', 1);
         check('heating only follows explicit button', c.snapshot.heater_mode === 1);
+        c.snapshot = {...c.snapshot, setpoint_reached: false, charging: true}; c._changed();
+        check('warming and charging use confirmed state', i._visualState().warming && i._visualState().charging);
+        const settings = new Gio.Settings({schema_id: 'org.gnome.desktop.interface'});
+        settings.set_boolean('enable-animations', false); await pause(100);
+        check('reduced motion has no animation timer', !i._animationId);
+        settings.set_boolean('enable-animations', true); await pause(100);
+        check('animation preference restarts visible animation', Boolean(i._animationId));
+        await pause(150); await screenshot('warming-charging');
+        c.setHeaterMode(2);
+        check('boost gets its own visual mode', i._visualState().boost && i._heaterStatus.text.includes('Boost'));
+        await pause(150); await screenshot('boost');
+        c.snapshot = {...c.snapshot, setpoint_reached: true, charging: false}; c._changed();
+        check('target reached stops warming pulse', !i._visualState().warming);
+        i.menu.close();
+        check('closing panel stops animation source', i._animationId === 0);
+        i.menu.open();
         i._modeButtons[0].emit('clicked', 1);
         i._selectTab('settings');
         await pause(150);
@@ -73,6 +90,7 @@ export default class Test extends Extension {
         c.snapshot = {...c.snapshot, stale: true}; c._changed();
         check('stale battery immediately disappears', !i._barBattery.text.includes('%') && i._battery.text === '—');
         check('stale target is not presented as confirmed', i._temperature.text === '—');
+        check('stale status stops all animations', !i._animationId && !i._visualState().heating && !i._visualState().charging);
         c.disconnectDevice();
         check('disconnect keeps heater unknown', c.snapshot.heater_mode === null);
         const keyboard = Clutter.get_default_backend().get_default_seat().create_virtual_device(Clutter.InputDeviceType.KEYBOARD_DEVICE);
@@ -81,7 +99,7 @@ export default class Test extends Extension {
         await pause(200);
         check('Escape closes native panel', !i.menu.isOpen);
         ext.stateObj.disable();
-        check('disable destroys service and timers', c._destroyed && !c._watchdog && !c._worker);
+        check('disable destroys service and timers', c._destroyed && !c._watchdog && !c._worker && !i._animationId);
         ext.stateObj.enable();
         check('enable creates one fresh indicator', ext.stateObj._indicator._client.state === 'disconnected' && !ext.stateObj._indicator._client._worker);
         console.log(`VEAZY_SHELL_OK ${count}`);
